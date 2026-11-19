@@ -44,10 +44,10 @@ namespace FlowVideoStudio
         public StudioConfig()
         {
             flowUrl = "https://flow.google.com/project/d98f8df7-c977-46ba-8dd8-f39f24714571/tool/1af05941-50b5-4c91-b5d1-d4df10f10273";
-            ttsUrl = "https://app.studio/tts_hub.html";
-            customTtsUrl = "";
-            ttsInputSelector = "textarea, #script-input, [contenteditable='true'], input[type='text']";
-            ttsButtonSelector = "#generate-btn, button[type='submit'], .generate-btn, .tts-btn";
+            ttsUrl = "https://aiseslendirme.asliortabakan40.workers.dev/";
+            customTtsUrl = "https://aiseslendirme.asliortabakan40.workers.dev/";
+            ttsInputSelector = "#json-timeline-textarea, textarea";
+            ttsButtonSelector = "button";
             autoPipeline = true;
             expectedVideoCount = 3;
             resolution = "1080x1920";
@@ -323,19 +323,36 @@ namespace FlowVideoStudio
                 SwitchTab(3);
             };
 
-            btnCaptureFlowNow = CreateBarButton("🎬 Sayfadan Çek", 130, Color.FromArgb(30, 58, 138));
-            btnCaptureFlowNow.Click += async (s, e) => await TriggerManualFlowScanAsync();
-
-            btnRunScriptTts = CreateBarButton("🔊 script.md Seslendir", 155, Color.FromArgb(88, 28, 135));
+            btnRunScriptTts = CreateBarButton("🔊 JSON Yapıştır & Seslendir", 185, Color.FromArgb(180, 100, 10));
             btnRunScriptTts.Click += async (s, e) => await TriggerScriptTtsPipelineAsync();
 
-            btnOpenFolder = CreateBarButton("📂 Klasör", 95, Color.FromArgb(35, 43, 58));
+            Button btnUploadAudioAdvance = CreateBarButton("🎵 Sesi Yükle & Editöre Geç ➔", 195, Color.FromArgb(0, 140, 80));
+            btnUploadAudioAdvance.Click += (s, e) =>
+            {
+                using (OpenFileDialog ofd = new OpenFileDialog())
+                {
+                    ofd.Title = "VoxAtelier'den İndirdiğiniz Ses Dosyasını (.wav / .mp3) Seçin";
+                    ofd.InitialDirectory = Directory.Exists(userDownloadsDir) ? userDownloadsDir : projectDir;
+                    ofd.Filter = "Ses Dosyaları (*.wav;*.mp3;*.m4a;*.ogg)|*.wav;*.mp3;*.m4a;*.ogg|Tüm Dosyalar (*.*)|*.*";
+                    if (ofd.ShowDialog(this) == DialogResult.OK)
+                    {
+                        string destFile = Path.Combine(audioDir, Path.GetFileName(ofd.FileName));
+                        File.Copy(ofd.FileName, destFile, true);
+                        UpdateStatusBarCounts();
+                        SwitchTab(3);
+                        PushProjectStateToEditor(true);
+                        SetStatus("✅ Ses dosyası yüklendi ve videolarla birlikte CapCut Video Edit arayüzüne aktarıldı!");
+                    }
+                }
+            };
+
+            btnOpenFolder = CreateBarButton("📂 Klasör", 90, Color.FromArgb(35, 43, 58));
             btnOpenFolder.Click += (s, e) => Process.Start("explorer.exe", projectDir);
 
             rightActions.Controls.Add(btnAutoPipeline);
             rightActions.Controls.Add(btnSyncDownloads);
-            rightActions.Controls.Add(btnCaptureFlowNow);
             rightActions.Controls.Add(btnRunScriptTts);
+            rightActions.Controls.Add(btnUploadAudioAdvance);
             rightActions.Controls.Add(btnOpenFolder);
 
             topMasterBar.Controls.Add(btnTabFlow);
@@ -950,38 +967,41 @@ namespace FlowVideoStudio
     }
   }
 
-  window.__fillAndRunExternalTts = function(text, scenes, inputSelector, btnSelector, narratorTone) {
-    if (typeof window.startVoiceover === 'function') {
-      window.startVoiceover(text, scenes, true, narratorTone);
-      return 'hook_called';
-    }
-    window.postMessage({ type: 'FLOW_STUDIO_SCRIPT', text: text, scenes: scenes, narratorTone: narratorTone, autoExecute: true }, '*');
-
-    const inputEl = document.querySelector(inputSelector || 'textarea, [contenteditable=""true""], input[type=""text""]');
-    if (inputEl) {
-      inputEl.focus();
-      if (inputEl.tagName === 'TEXTAREA' || inputEl.tagName === 'INPUT') {
-        const proto = inputEl.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
-        const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
-        if (setter) setter.call(inputEl, text);
-        else inputEl.value = text;
-      } else {
-        inputEl.textContent = text;
-      }
-      inputEl.dispatchEvent(new Event('input', { bubbles: true }));
-      inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+  window.__fillAndRunExternalTts = function(voxJsonText, scenes, inputSelector, btnSelector, narratorTone) {
+    // 1. Check if VoxAtelier ('JSON Olarak Yapıştır' tab) is present on the page
+    const allButtons = Array.from(document.querySelectorAll('button'));
+    const jsonTabBtn = allButtons.find(b => /JSON Olarak Yapıştır/i.test(b.textContent || ''));
+    if (jsonTabBtn) {
+      jsonTabBtn.click();
     }
 
     setTimeout(() => {
-      let btn = document.querySelector(btnSelector || '#generate-btn, button[type=""submit""]');
-      if (!btn) {
-        const allBtns = Array.from(document.querySelectorAll('button, input[type=""button""], input[type=""submit""]'));
-        btn = allBtns.find(b => /seslendir|üret|generate|speak|synthesize|oluştur|convert|tts/i.test(b.textContent || b.value || ''));
+      const jsonArea = document.querySelector('#json-timeline-textarea')
+                    || document.querySelector(inputSelector || 'textarea');
+      if (jsonArea) {
+        jsonArea.focus();
+        const proto = jsonArea.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;
+        const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set;
+        if (setter) setter.call(jsonArea, voxJsonText);
+        else jsonArea.value = voxJsonText;
+        jsonArea.dispatchEvent(new Event('input', { bubbles: true }));
+        jsonArea.dispatchEvent(new Event('change', { bubbles: true }));
       }
-      if (btn) btn.click();
-    }, 450);
 
-    return inputEl ? 'dom_filled' : 'postmessage_sent';
+      // Click 'JSON Zaman Çizelgesine Göre Full Sesi Üret' button using the currently selected voice
+      setTimeout(() => {
+        const btnsNow = Array.from(document.querySelectorAll('button'));
+        let genBtn = btnsNow.find(b => /JSON Zaman Çizelgesine Göre|Full Sesi Üret|Sahneleri Seslendir/i.test(b.textContent || ''));
+        if (!genBtn) {
+          genBtn = btnsNow.find(b => /Metni Seslendir|Seslendir|Üret|Generate/i.test(b.textContent || '') && !/JSON Olarak/i.test(b.textContent || ''));
+        }
+        if (genBtn && !genBtn.disabled) {
+          genBtn.click();
+        }
+      }, 450);
+    }, 350);
+
+    return 'voxatelier_json_injected';
   };
 
   setInterval(() => {
@@ -1273,11 +1293,110 @@ namespace FlowVideoStudio
                 "window.__scanAndCaptureFlowVideos ? window.__scanAndCaptureFlowVideos(false) : 0;");
         }
 
+        private string BuildVoxAtelierJsonFromScriptMd(string mdText)
+        {
+            string text = (mdText ?? "").Trim();
+            if (text.StartsWith("{")) return text;
+
+            Match mTitle = Regex.Match(text, @"^#\s+(.+)$", RegexOptions.Multiline);
+            string title = mTitle.Success ? mTitle.Groups[1].Value.Trim() : "Flow Video Projesi";
+
+            Match mFormat = Regex.Match(text, @"\*\*Format:\*\*\s*([0-9:]+)", RegexOptions.IgnoreCase);
+            string aspectRatio = mFormat.Success ? mFormat.Groups[1].Value.Trim() : "9:16";
+
+            string fullNarration = ExtractCleanFullNarration(text);
+            string toneRaw = ExtractNarratorTone(text).Replace("\r", " ").Replace("\n", " ").Trim();
+
+            string voiceType = "Derin, epik, tok ve gizemli bir erkek sesi";
+            string pacing = !string.IsNullOrEmpty(toneRaw) ? toneRaw : "Her sahnedeki metni sahne süresine yayarak, gerilim dolu ve dramatik bir ritimle oku.";
+            int dotIdx = toneRaw.IndexOf('.');
+            if (dotIdx > 0)
+            {
+                voiceType = toneRaw.Substring(0, dotIdx).Trim();
+                string rest = toneRaw.Substring(dotIdx + 1).Trim();
+                if (!string.IsNullOrEmpty(rest)) pacing = rest;
+            }
+
+            var clips = new List<Dictionary<string, object>>();
+            MatchCollection matches = Regex.Matches(
+                text,
+                @"^###\s+(Sahne\s*\d+[^\r\n]*)\r?\n([\s\S]*?)(?=^###\s+|^##\s+|\z)",
+                RegexOptions.Multiline | RegexOptions.IgnoreCase);
+
+            int idx = 0;
+            int maxEndSec = 0;
+            foreach (Match m in matches)
+            {
+                string header = m.Groups[1].Value.Trim();
+                string body = m.Groups[2].Value;
+
+                int startSec = idx * 10;
+                int endSec = (idx + 1) * 10;
+                string timeRange = string.Format("{0:D2}:{1:D2}–{2:D2}:{3:D2}", startSec / 60, startSec % 60, endSec / 60, endSec % 60);
+
+                Match tm = Regex.Match(header, @"\((\d+):(\d+)\s*[–\-]\s*(\d+):(\d+)\)");
+                if (tm.Success)
+                {
+                    startSec = int.Parse(tm.Groups[1].Value) * 60 + int.Parse(tm.Groups[2].Value);
+                    endSec = int.Parse(tm.Groups[3].Value) * 60 + int.Parse(tm.Groups[4].Value);
+                    timeRange = string.Format("{0}:{1}–{2}:{3}", tm.Groups[1].Value, tm.Groups[2].Value, tm.Groups[3].Value, tm.Groups[4].Value);
+                }
+                if (endSec > maxEndSec) maxEndSec = endSec;
+
+                Match mSceneTitle = Regex.Match(body, @"\*\*Başlık:\*\*\s*(.+)", RegexOptions.IgnoreCase);
+                Match mVisual = Regex.Match(body, @"\*\*Görsel Özet:\*\*\s*(.+)", RegexOptions.IgnoreCase);
+                Match mVoice = Regex.Match(body, @"\*\*(?:Türkçe Dış Ses|Seslendirme|Dış Ses):\*\*\s*(.+)", RegexOptions.IgnoreCase);
+
+                string sceneTitle = mSceneTitle.Success ? mSceneTitle.Groups[1].Value.Trim() : ("Sahne " + (idx + 1));
+                string visualDesc = mVisual.Success ? mVisual.Groups[1].Value.Trim() : "";
+                string narration = mVoice.Success ? mVoice.Groups[1].Value.Trim().Trim('"', '“', '”', '\'', ' ') : "";
+
+                clips.Add(new Dictionary<string, object>
+                {
+                    { "clip_number", idx + 1 },
+                    { "time_range", timeRange },
+                    { "start_seconds", startSec },
+                    { "end_seconds", endSec },
+                    { "duration_seconds", Math.Max(1, endSec - startSec) },
+                    { "scene_title", sceneTitle },
+                    { "visual_description", visualDesc },
+                    { "narration_text", narration }
+                });
+                idx++;
+            }
+
+            if (maxEndSec == 0) maxEndSec = Math.Max(10, clips.Count * 10);
+
+            var root = new Dictionary<string, object>
+            {
+                { "project", new Dictionary<string, object>
+                    {
+                        { "title", title },
+                        { "language", "tr" },
+                        { "aspect_ratio", aspectRatio },
+                        { "total_duration_seconds", maxEndSec },
+                        { "clip_count", Math.Max(1, clips.Count) }
+                    }
+                },
+                { "narration_direction", new Dictionary<string, object>
+                    {
+                        { "voice_type", voiceType },
+                        { "style", "Klasik tarihi belgesel anlatıcısı tonu" },
+                        { "pacing", pacing }
+                    }
+                },
+                { "full_narrator_script", fullNarration },
+                { "clips", clips }
+            };
+
+            return json.Serialize(root);
+        }
+
         private async Task TriggerScriptTtsPipelineAsync()
         {
             isTtsAutomationRunning = true;
             SwitchTab(2);
-            SetStatus("script.md içindeki 'Tam Türkçe Seslendirme Metni' Seslendirme Sitesine gönderiliyor...");
+            SetStatus("script.md VoxAtelier JSON formatına dönüştürülüyor ve seçili ses ile yapıştırılıyor...");
             await Task.Delay(350);
             await InjectScriptTextIntoTtsPageAsync();
         }
@@ -1287,20 +1406,22 @@ namespace FlowVideoStudio
             if (wvTts == null || wvTts.CoreWebView2 == null) return;
 
             string scriptText = File.Exists(scriptMdPath) ? File.ReadAllText(scriptMdPath, Encoding.UTF8) : "";
-            string cleanNarration = ExtractCleanFullNarration(scriptText);
+            string voxJsonString = BuildVoxAtelierJsonFromScriptMd(scriptText);
+            try { Clipboard.SetText(voxJsonString); } catch { }
+
             string narratorTone = ExtractNarratorTone(scriptText);
             var scenes = ParseScriptMdScenes(scriptText);
 
             string jsCall = string.Format(
                 "window.__fillAndRunExternalTts && window.__fillAndRunExternalTts({0}, {1}, {2}, {3}, {4});",
-                json.Serialize(cleanNarration),
+                json.Serialize(voxJsonString),
                 json.Serialize(scenes),
                 json.Serialize(config.ttsInputSelector),
                 json.Serialize(config.ttsButtonSelector),
                 json.Serialize(narratorTone)
             );
             await wvTts.CoreWebView2.ExecuteScriptAsync(jsCall);
-            SetStatus("Tam Türkçe Seslendirme Metni seslendirme sitesine aktarıldı ve ses üretimi tetiklendi.");
+            SetStatus("✅ VoxAtelier JSON oluşturuldu, 'JSON Olarak Yapıştır' kutusuna yapıştırıldı ve seçili ses ile seslendirme başlatıldı!");
         }
 
         // =========================================================================

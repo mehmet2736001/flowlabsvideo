@@ -7,15 +7,16 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="manifest" href="/manifest.json" />
-  <title>FlowVideoStudio Cloud — Mobil & Masaüstü Video Otomasyon Stüdyosu</title>
+  <title>FlowVideoStudio Cloud — Adım Adım Video, VoxAtelier TTS & CapCut Kurgu Stüdyosu</title>
   <style>
     :root {
-      --bg-dark: #0a0c10;
+      --bg-dark: #090b10;
       --bg-panel: #12161f;
-      --bg-panel-2: #19202e;
+      --bg-panel-2: #181e2c;
       --bg-track: #0d1118;
       --border: #263044;
       --accent: #00e5ff;
+      --accent-amber: #f59e0b;
       --accent-purple: #7c4dff;
       --playhead: #ff3b5c;
       --text: #e6edf3;
@@ -33,7 +34,7 @@
       overflow: hidden;
     }
 
-    /* TOP MASTER NAVIGATION BAR */
+    /* TOP STEPPER NAVIGATION BAR */
     .master-nav {
       background: var(--bg-panel);
       border-bottom: 1px solid var(--border);
@@ -47,21 +48,22 @@
     }
     .nav-tabs {
       display: flex;
-      gap: 6px;
+      gap: 5px;
       flex-wrap: wrap;
+      align-items: center;
     }
     .nav-tab {
       background: var(--bg-panel-2);
       border: 1px solid var(--border);
       color: var(--muted);
-      padding: 8px 13px;
+      padding: 7px 11px;
       border-radius: 8px;
       font-size: 12px;
       font-weight: 700;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       transition: all 0.15s;
     }
     .nav-tab.active {
@@ -70,38 +72,58 @@
       color: #fff;
       box-shadow: 0 3px 12px rgba(0, 229, 255, 0.25);
     }
-    .nav-actions {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
+    .nav-tab.done {
+      border-color: rgba(0, 230, 118, 0.45);
+      color: var(--success);
     }
+    .nav-tab.active.done {
+      color: #fff;
+    }
+    .step-arrow { color: var(--muted); font-size: 11px; }
+
     button, .btn {
       background: var(--bg-panel-2);
       color: var(--text);
       border: 1px solid var(--border);
-      padding: 7px 12px;
-      border-radius: 7px;
+      padding: 8px 13px;
+      border-radius: 8px;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
+      gap: 6px;
       transition: all 0.15s;
     }
-    button:hover { border-color: var(--accent); color: #fff; }
-    button:active { transform: scale(0.97); }
-    button.primary {
+    button:hover, .btn:hover { border-color: var(--accent); color: #fff; }
+    button:active, .btn:active { transform: scale(0.98); }
+    button.primary, .btn.primary {
       background: linear-gradient(135deg, #00b4d8, #7c4dff);
       border: none;
       color: #fff;
     }
-    button.success {
+    button.amber, .btn.amber {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      border: none;
+      color: #090b10;
+      font-weight: 700;
+    }
+    button.success, .btn.success {
       background: linear-gradient(135deg, #00c853, #009624);
       border: none;
       color: #fff;
+      font-weight: 700;
+    }
+    button.next-step-btn {
+      background: linear-gradient(135deg, #00c853, #00b4d8);
+      border: none;
+      color: #fff;
+      padding: 12px 22px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0, 200, 83, 0.3);
     }
     button.render-btn {
       background: linear-gradient(135deg, #ff3b5c, #ff7b00);
@@ -135,109 +157,124 @@
       flex-direction: column;
     }
 
-    /* VIEW 1: GOOGLE FLOW & SCRIPT.MD SCENE HUB */
-    .hub-grid {
-      max-width: 1280px;
+    .wizard-container {
+      max-width: 1080px;
       width: 100%;
       margin: 0 auto;
-      padding: 16px;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .wizard-grid-2 {
       display: grid;
-      grid-template-columns: 1.15fr 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: 16px;
     }
     .card {
       background: var(--bg-panel);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 16px;
+      padding: 18px;
       display: flex;
       flex-direction: column;
       gap: 12px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.35);
     }
     .card h2 {
-      font-size: 15px;
+      font-size: 16px;
       color: var(--accent);
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-    }
-    .script-editor {
-      width: 100%;
-      min-height: 210px;
-      font-family: 'Consolas', monospace;
-      font-size: 13px;
-      color: #d2a8ff;
-      resize: vertical;
-      line-height: 1.45;
-    }
-    .scene-box {
-      background: var(--bg-panel-2);
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      font-size: 12px;
+      flex-wrap: wrap;
     }
     .dropzone {
       border: 2px dashed var(--accent);
       background: rgba(0, 229, 255, 0.05);
-      border-radius: 10px;
-      padding: 20px;
+      border-radius: 12px;
+      padding: 28px 20px;
       text-align: center;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
-    .dropzone:hover { background: rgba(0, 229, 255, 0.12); }
+    .dropzone:hover { background: rgba(0, 229, 255, 0.12); transform: translateY(-1px); }
+    .dropzone.amber-zone {
+      border-color: var(--accent-amber);
+      background: rgba(245, 158, 11, 0.06);
+    }
+    .dropzone.success-zone {
+      border-color: var(--success);
+      background: rgba(0, 230, 118, 0.06);
+    }
 
-    /* VIEW 2: EMBEDDED TTS WEBSITE & VOICEOVER STUDIO */
+    .script-editor {
+      width: 100%;
+      min-height: 220px;
+      font-family: 'Consolas', monospace;
+      font-size: 12.5px;
+      color: #d2a8ff;
+      resize: vertical;
+      line-height: 1.45;
+    }
+    .json-editor {
+      width: 100%;
+      min-height: 220px;
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+      color: #fcd34d;
+      background: #07090e;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    .wizard-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 8px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    /* VIEW 3: EMBEDDED VOXATELIER TTS SITE */
     .tts-layout {
       flex: 1;
       display: flex;
       flex-direction: column;
       min-height: 0;
     }
-    .tts-toolbar {
-      background: var(--bg-panel-2);
+    .tts-top-bar {
+      background: #141824;
       border-bottom: 1px solid var(--border);
       padding: 10px 14px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: space-between;
+      gap: 10px;
       flex-wrap: wrap;
     }
-    .tts-workspace {
+    .tts-iframe-container {
       flex: 1;
-      display: grid;
-      grid-template-columns: 1fr 380px;
-      min-height: 0;
-    }
-    .tts-iframe-wrap {
-      position: relative;
-      background: #07090e;
       display: flex;
-      flex-direction: column;
-      min-height: 360px;
+      position: relative;
+      min-height: 0;
+      background: #0B0F17;
     }
     #tts-iframe {
       width: 100%;
-      flex: 1;
+      height: 100%;
       border: none;
-      background: #fff;
-    }
-    .tts-side-panel {
-      background: var(--bg-panel);
-      border-left: 1px solid var(--border);
-      padding: 14px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      background: #0B0F17;
     }
 
-    /* VIEW 3: CAPCUT EDITOR & BROWSER RENDER */
+    /* VIEW 5: CAPCUT EDITOR & BROWSER RENDER */
     .editor-upper {
       flex: 1;
       display: flex;
@@ -245,7 +282,7 @@
       border-bottom: 1px solid var(--border);
     }
     .editor-left {
-      width: 310px;
+      width: 300px;
       background: var(--bg-panel);
       border-right: 1px solid var(--border);
       padding: 12px;
@@ -452,13 +489,25 @@
     .media-item {
       background: var(--bg-panel-2);
       border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 8px;
+      border-radius: 8px;
+      padding: 10px 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 6px;
-      font-size: 12px;
+      gap: 8px;
+      font-size: 12.5px;
+    }
+    .toast-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(0, 230, 118, 0.15);
+      border: 1px solid rgba(0, 230, 118, 0.4);
+      color: var(--success);
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 11.5px;
+      font-weight: 700;
     }
 
     /* MODAL */
@@ -498,182 +547,231 @@
       transition: width 0.2s;
     }
 
-    /* MOBILE RESPONSIVE ADAPTATION */
-    @media (max-width: 960px) {
-      .hub-grid { grid-template-columns: 1fr; }
-      .tts-workspace { grid-template-columns: 1fr; }
-      .tts-side-panel { border-left: none; border-top: 1px solid var(--border); }
+    @media (max-width: 920px) {
+      .wizard-grid-2 { grid-template-columns: 1fr; }
       .editor-upper { flex-direction: column; overflow-y: auto; }
       .editor-left, .editor-right {
         width: 100%;
         border-right: none;
         border-left: none;
         border-bottom: 1px solid var(--border);
-        max-height: 200px;
+        max-height: 190px;
       }
-      .editor-center { min-height: 250px; }
+      .editor-center { min-height: 260px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- TOP NAVIGATION BAR -->
+  <!-- TOP 5-STEP WIZARD BAR -->
   <header class="master-nav">
     <div class="nav-tabs">
-      <div class="nav-tab active" id="nav-1" onclick="switchMainView(1)">
-        🎬 1. Flow & script.md (<span id="badge-vid-count">0</span>)
+      <div class="nav-tab active" id="nav-1" onclick="goToStep(1)">
+        🎬 1. Videoları Yükle (<span id="badge-vid-count">0</span>)
       </div>
-      <div class="nav-tab" id="nav-2" onclick="switchMainView(2)">
-        🎙️ 2. Seslendirme Sitesi (<span id="badge-aud-count">0</span>)
+      <span class="step-arrow">➔</span>
+      <div class="nav-tab" id="nav-2" onclick="goToStep(2)">
+        📜 2. script.md & JSON
       </div>
-      <div class="nav-tab" id="nav-3" onclick="switchMainView(3)">
-        ✂️ 3. CapCut Kurgu & Render
+      <span class="step-arrow">➔</span>
+      <div class="nav-tab" id="nav-3" onclick="goToStep(3)">
+        🎙️ 3. Seslendirme (VoxAtelier)
+      </div>
+      <span class="step-arrow">➔</span>
+      <div class="nav-tab" id="nav-4" onclick="goToStep(4)">
+        📂 4. Sesi Cihazdan Yükle (<span id="badge-aud-count">0</span>)
+      </div>
+      <span class="step-arrow">➔</span>
+      <div class="nav-tab" id="nav-5" onclick="goToStep(5)">
+        ✂️ 5. Video Edit & Render
       </div>
     </div>
 
-    <div class="nav-actions">
-      <button onclick="generateDemoCloudProject()" title="Telefon veya PC'de anında test etmek için örnek videolar ve seslendirmeler üretir">
-        🧪 Test Sahnesi Üret
+    <div style="display:flex; gap:6px; align-items:center;">
+      <button onclick="window.open('https://flow.google.com/project/d98f8df7-c977-46ba-8dd8-f39f24714571/tool/1af05941-50b5-4c91-b5d1-d4df10f10273', '_blank')">
+        🌐 Flow Labs Aç
       </button>
-      <button class="primary" onclick="autoAssembleAllToTimeline()">
-        ✨ Timeline'a Otomatik Diz
-      </button>
-      <button class="render-btn" onclick="switchMainView(3); startBrowserRender();">
+      <button class="render-btn" onclick="goToStep(5); startBrowserRender();">
         🚀 Render Al (.MP4)
       </button>
     </div>
   </header>
 
   <!-- ===================================================================== -->
-  <!-- VIEW 1: GOOGLE FLOW & SCRIPT.MD SAHNE MERKEZİ                         -->
+  <!-- ADIM 1: VİDEOLARI YÜKLE (video1.mp4, video2.mp4, video3.mp4...)       -->
   <!-- ===================================================================== -->
   <section class="main-view active" id="view-1">
-    <div class="hub-grid">
-      <!-- Left: script.md Editor & Scene Prompts -->
+    <div class="wizard-container">
       <div class="card">
         <h2>
-          <span>📜 script.md Senaryo & Prompt Yönetimi</span>
-          <div style="display:flex; gap:6px;">
-            <label class="btn" style="cursor:pointer;">
-              📂 script.md Yükle
-              <input type="file" accept=".md,.txt" style="display:none;" onchange="loadScriptFile(event)" />
-            </label>
-            <button onclick="downloadScriptFile()">💾 İndir</button>
-          </div>
+          <span>🎬 1. Adım: Flow Labs Videolarınızı Cihazdan Yükleyin</span>
+          <span class="toast-badge">Doğal Sıralama: video1 ➔ video2 ➔ video3</span>
         </h2>
-
-        <textarea class="script-editor" id="script-editor" oninput="onScriptChanged()"></textarea>
-
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="primary" style="flex:1;" onclick="openGoogleFlowProject()">
-            🌐 Google Flow Projesini Aç
-          </button>
-          <button class="success" style="flex:1;" onclick="runAutomatedVoiceover()">
-            🔊 script.md'yi Şimdi Seslendir ➔
-          </button>
-        </div>
-
-        <div style="font-size:12px; font-weight:700; color:var(--muted); margin-top:4px;">
-          SAHNELER (<span id="scenes-total-lbl">0</span> Sahne — Telefondan veya PC'den Tek Tıkla Flow'a Gönderin)
-        </div>
-        <div id="scenes-list" style="display:flex; flex-direction:column; gap:8px;"></div>
-      </div>
-
-      <!-- Right: Flow Video Uploader / Mobile Gallery Picker & Project Sync -->
-      <div class="card">
-        <h2>
-          <span>📥 Üretilen Flow Videolarını Aktar</span>
-          <span style="font-size:11px; color:var(--success);">● Tarayıcı Veritabanı (IndexedDB) Aktif</span>
-        </h2>
+        <p style="font-size:13px; color:var(--muted);">
+          Flow Labs'tan indirdiğiniz sahne videolarını (<code>video1.mp4</code>, <code>video2.mp4</code>, <code>video3.mp4</code>...) aşağıya tıklayarak veya sürükleyerek seçin. Seçtiğiniz videolar sahne sırasına göre otomatik dizilir.
+        </p>
 
         <label class="dropzone" id="video-dropzone">
-          <div style="font-size:28px; margin-bottom:6px;">🎬</div>
-          <div style="font-weight:700; font-size:14px; color:#fff;">
-            Flow Videolarını Seçin veya Buraya Sürükleyin
+          <div style="font-size:38px;">📥</div>
+          <div style="font-weight:700; font-size:16px; color:#fff;">
+            Videoları Cihazdan Seçmek İçin Dokunun / Tıklayın (Çoklu Seçim)
           </div>
-          <div style="font-size:12px; color:var(--muted); margin-top:4px;">
-            Telefondayken galeriden/indirilenlerden birden fazla <code>.mp4</code> seçebilirsiniz. Otomatik olarak sahne sırasına göre kaydedilir ve CapCut Timeline'ına dizilir.
+          <div style="font-size:12.5px; color:var(--muted);">
+            Telefon galerinizden veya bilgisayarınızın İndirilenler (Downloads) klasöründen tüm sahne videolarını tek seferde seçebilirsiniz.
           </div>
           <input type="file" id="flow-video-input" accept="video/*" multiple style="display:none;" onchange="handleVideoFilesSelected(event.target.files)" />
         </label>
 
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
-          <span style="font-size:12px; font-weight:700; color:var(--accent);">PROJE VİDEOLARI (<span id="hub-video-count">0</span>)</span>
-          <button onclick="clearAllProjectMedia()" style="font-size:11px; color:#ff3b5c;">🗑️ Medyaları Temizle</button>
-        </div>
-        <div id="hub-video-list" style="display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto;"></div>
-
-        <div style="border-top:1px solid var(--border); padding-top:12px; margin-top:6px;">
-          <h2 style="margin-bottom:6px;">☁️ Cihazlar Arası Proje Aktarımı (PC ⇄ Telefon)</h2>
-          <p style="font-size:12px; color:var(--muted); margin-bottom:10px;">
-            Bilgisayarda hazırladığınız senaryo ve kurgu projesini tek dosya olarak indirip telefonunuzda açarak kaldığınız yerden devam edebilirsiniz.
-          </p>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button onclick="exportProjectJson()" style="flex:1;">📤 Projeyi Dışa Aktar (.json)</button>
-            <label class="btn" style="flex:1; cursor:pointer;">
-              📥 Proje Dosyası Yükle
-              <input type="file" accept=".json" style="display:none;" onchange="importProjectJson(event)" />
-            </label>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+          <span style="font-size:13px; font-weight:700; color:var(--accent);">
+            YÜKLENEN VİDEOLAR (<span id="hub-video-count">0</span> Klip)
+          </span>
+          <div style="display:flex; gap:8px;">
+            <button onclick="generateDemoCloudProject()" style="font-size:11.5px;">🧪 Örnek Test Videoları Üret</button>
+            <button onclick="clearAllProjectMedia()" style="font-size:11.5px; color:#ff3b5c;">🗑️ Temizle</button>
           </div>
+        </div>
+
+        <div id="hub-video-list" style="display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto;"></div>
+
+        <div class="wizard-footer">
+          <span style="font-size:12px; color:var(--muted);" id="step1-hint">Videoları seçtikten sonra sağdaki Devam Et butonuna tıklayın.</span>
+          <button class="next-step-btn" onclick="goToStep(2)">
+            Devam Et: 2. Adım (script.md Yükle) ➔
+          </button>
         </div>
       </div>
     </div>
   </section>
 
   <!-- ===================================================================== -->
-  <!-- VIEW 2: KENDİ SESLENDİRME SİTENİZ (EMBEDDED IFRAME + TTS BRIDGE)      -->
+  <!-- ADIM 2: SCRIPT.MD YÜKLE & OTOMATİK VOXATELIER JSON DÖNÜŞTÜRÜCÜ        -->
   <!-- ===================================================================== -->
   <section class="main-view" id="view-2">
-    <div class="tts-layout">
-      <div class="tts-toolbar">
-        <span style="font-size:12px; font-weight:700; color:var(--accent);">🌐 Seslendirme Sitenizin URL'si:</span>
-        <input type="text" id="tts-site-url" style="flex:1; min-width:200px;" placeholder="https://seslendirmesitem.com" />
-        <button class="primary" onclick="saveAndLoadTtsSite()">Sitemi Göm & Kaydet</button>
-        <button class="success" onclick="sendScriptToEmbeddedTts()">📜 script.md'yi Siteme Gönder</button>
-      </div>
+    <div class="wizard-container">
+      <div class="card">
+        <h2>
+          <span>📜 2. Adım: script.md Dosyanızı Yükleyin (Otomatik JSON Dönüştürücü)</span>
+          <span class="toast-badge" id="json-copy-badge">✓ JSON Otomatik Hazırlandı</span>
+        </h2>
+        <p style="font-size:13px; color:var(--muted);">
+          İndirdiğiniz <code>script.md</code> dosyasını aşağıdan seçin. Sistem, senaryonuzu <strong>VoxAtelier (aiseslendirme)</strong> sitenizin kabul ettiği birebir <strong>Zaman Çizelgeli JSON</strong> formatına otomatik dönüştürür ve panoya kopyalar.
+        </p>
 
-      <div class="tts-workspace">
-        <!-- Embedded User TTS Website Iframe -->
-        <div class="tts-iframe-wrap">
-          <iframe id="tts-iframe" allow="microphone; autoplay; clipboard-write" src="about:blank"></iframe>
+        <label class="dropzone amber-zone" style="padding:18px;">
+          <div style="font-size:26px;">📄</div>
+          <div style="font-weight:700; font-size:15px; color:#fcd34d;">
+            Cihazdan script.md Dosyasını Seçmek İçin Tıklayın
+          </div>
+          <div style="font-size:12px; color:var(--muted);">
+            Seçtiğiniz anda aşağıdaki JSON otomatik oluşturulur ve kopyalanır
+          </div>
+          <input type="file" accept=".md,.txt,.json" style="display:none;" onchange="loadScriptFile(event)" />
+        </label>
+
+        <div class="wizard-grid-2">
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <label style="font-size:12px; font-weight:700; color:#d2a8ff;">1. Yüklenen script.md İçeriği:</label>
+              <span style="font-size:11px; color:var(--muted);" id="scenes-total-lbl">3 Sahne</span>
+            </div>
+            <textarea class="script-editor" id="script-editor" oninput="onScriptChanged()"></textarea>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <label style="font-size:12px; font-weight:700; color:#fcd34d;">2. Siteniz İçin Otomatik Üretilen JSON:</label>
+              <button class="amber" style="padding:4px 10px; font-size:11px;" onclick="copyVoxJsonToClipboard(true)">
+                📋 JSON'u Kopyala
+              </button>
+            </div>
+            <textarea class="json-editor" id="vox-json-output" readonly></textarea>
+          </div>
         </div>
 
-        <!-- Right Side: Direct Audio Upload / Built-in Cloud Voice Synthesizer -->
-        <div class="tts-side-panel">
-          <div style="font-size:13px; font-weight:700; color:var(--accent);">
-            🎙️ Otomatik Ses Yakalama & Yerleşik Ses Üretici
-          </div>
-          <p style="font-size:12px; color:var(--muted);">
-            Soldaki gömülü sitenizden üretilen sesleri otomatik almak için sitenizden <code>window.parent.postMessage({ type: 'FLOW_STUDIO_AUDIO', url: '...' }, '*')</code> gönderebilir veya indirilen ses dosyasını aşağıdan seçebilirsiniz:
-          </p>
-
-          <label class="dropzone" style="padding:14px;">
-            <div style="font-weight:700; font-size:13px; color:#fff;">🎵 Ses Dosyası Seç / Yükle (.MP3 / .WAV)</div>
-            <div style="font-size:11px; color:var(--muted); margin-top:3px;">Sitenizden inen ses dosyalarını seçtiğinizde otomatik olarak Timeline'a yerleşir</div>
-            <input type="file" accept="audio/*" multiple style="display:none;" onchange="handleAudioFilesSelected(event.target.files)" />
-          </label>
-
-          <div style="background:var(--bg-panel-2); border:1px solid var(--border); border-radius:9px; padding:12px; display:flex; flex-direction:column; gap:8px;">
-            <div style="font-size:12px; font-weight:700; color:var(--success);">⚡ Tarayıcı İçi Otomatik Seslendirme (WAV)</div>
-            <p style="font-size:11px; color:var(--muted);">
-              Harici sunucuya ihtiyaç duymadan <code>script.md</code> içindeki her sahne için anında ses dosyası üretip CapCut Timeline'ına aktarır:
-            </p>
-            <button class="success" onclick="synthesizeBrowserWavForScenes()">
-              🔊 Tüm Sahneleri Şimdi Seslendir & Timeline'a Diz
-            </button>
-          </div>
-
-          <div style="font-size:12px; font-weight:700; color:var(--muted);">PROJE SES DOSYALARI (<span id="hub-audio-count">0</span>)</div>
-          <div id="hub-audio-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+        <div class="wizard-footer">
+          <button onclick="goToStep(1)">⬅ Geri (1. Adım: Videolar)</button>
+          <button class="next-step-btn" onclick="proceedToStep3Tts()">
+            Devam Et: 3. Adım (Seslendirme Sitenizi Aç & JSON Yapıştır) ➔
+          </button>
         </div>
       </div>
     </div>
   </section>
 
   <!-- ===================================================================== -->
-  <!-- VIEW 3: CAPCUT TARZI VİDEO EDİTÖR & TARAYICI İÇİ RENDER MOTORU        -->
+  <!-- ADIM 3: GÖMÜLÜ SESLENDİRME SİTESİ (aiseslendirme.asliortabakan40...)  -->
   <!-- ===================================================================== -->
   <section class="main-view" id="view-3">
+    <div class="tts-layout">
+      <div class="tts-top-bar">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <button onclick="goToStep(2)">⬅ 2. Adım</button>
+          <span style="font-size:12.5px; font-weight:700; color:#fcd34d;">
+            🎙️ 3. Adım: Listeden Sesinizi Seçin ➔ "JSON Olarak Yapıştır" Kutucuğuna Yapıştırıp Seslendirin & WAV İndirin
+          </span>
+          <button class="amber" onclick="copyVoxJsonToClipboard(true)">
+            📋 JSON'u Tekrar Kopyala (Panoda Hazır)
+          </button>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="next-step-btn" style="padding:8px 16px; font-size:13px;" onclick="goToStep(4)">
+            ✅ Sesi Oluşturdum ve İndirdim — Devam Et (4. Adım) ➔
+          </button>
+        </div>
+      </div>
+
+      <div class="tts-iframe-container">
+        <iframe id="tts-iframe" allow="microphone; autoplay; clipboard-read; clipboard-write" src="https://aiseslendirme.asliortabakan40.workers.dev/"></iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- ADIM 4: İNDİRİLEN SESİ (.WAV / .MP3) CİHAZDAN YÜKLEME ARAYÜZÜ         -->
+  <!-- ===================================================================== -->
+  <section class="main-view" id="view-4">
+    <div class="wizard-container">
+      <div class="card">
+        <h2>
+          <span>📂 4. Adım: İndirdiğiniz Ses Dosyasını (.WAV / .MP3) Cihazdan Yükleyin</span>
+          <span class="toast-badge">Yüklendiği Anda Video Edit Arayüzüne Aktarılır</span>
+        </h2>
+        <p style="font-size:13px; color:var(--muted);">
+          3. adımda seslendirme sitenizden oluşturup cihazınıza indirdiğiniz <strong>Full WAV (<code>.wav</code> veya <code>.mp3</code>)</strong> ses dosyasını aşağıdan seçin. Seçtiğiniz anda videolarınızla ve altyazılarla birleşerek <strong>CapCut Video Edit Arayüzü</strong> açılacaktır.
+        </p>
+
+        <label class="dropzone success-zone" style="padding:36px 20px;">
+          <div style="font-size:42px;">🎵</div>
+          <div style="font-weight:700; font-size:17px; color:var(--success);">
+            İndirdiğiniz Ses Dosyasını (.WAV / .MP3) Cihazdan Seçmek İçin Tıklayın
+          </div>
+          <div style="font-size:13px; color:var(--muted);">
+            Ses dosyasını seçtiğinizde otomatik olarak Timeline'a yerleşir ve Video Edit ekranına geçilir
+          </div>
+          <input type="file" id="voice-file-input" accept="audio/*,.wav,.mp3,.m4a,.ogg" multiple style="display:none;" onchange="handleAudioFilesSelectedAndAdvance(event.target.files)" />
+        </label>
+
+        <div style="font-size:13px; font-weight:700; color:var(--success); margin-top:4px;">
+          YÜKLENEN SES DOSYALARI (<span id="hub-audio-count">0</span>)
+        </div>
+        <div id="hub-audio-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+
+        <div class="wizard-footer">
+          <button onclick="goToStep(3)">⬅ Geri (3. Adım: Seslendirme Sitesi)</button>
+          <button class="next-step-btn" onclick="autoAssembleAllToTimeline(); goToStep(5);">
+            Devam Et: 5. Adım (Video Edit & Render Arayüzünü Aç) ➔
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- ADIM 5: CAPCUT TARZI VİDEO EDİTÖR & TARAYICI İÇİ RENDER MOTORU        -->
+  <!-- ===================================================================== -->
+  <section class="main-view" id="view-5">
     <div class="editor-upper">
       <!-- Left Media Pool -->
       <aside class="editor-left">
@@ -690,6 +788,10 @@
             </label>
           </div>
         </div>
+
+        <button class="primary" onclick="autoAssembleAllToTimeline()" style="width:100%;">
+          ✨ Videoları ve Sesi Timeline'a Sırala
+        </button>
 
         <div style="font-size:11px; color:var(--muted); font-weight:700;">🎬 VİDEOLAR</div>
         <div id="editor-video-pool" style="display:flex; flex-direction:column; gap:6px;"></div>
@@ -708,7 +810,7 @@
           <div style="display:flex; align-items:center; gap:6px;">
             <button onclick="seekTo(0)">⏮</button>
             <button class="primary" id="btn-play" onclick="togglePlay()" style="min-width:92px;">▶ Oynat</button>
-            <button onclick="syncVideosToVoiceover()" title="Videoların hızını/süresini seslendirme sürelerine otomatik eşitler">🔗 Sese Eşitle</button>
+            <button onclick="syncVideosToVoiceover()" title="Videoların toplam süresini yüklenen seslendirme süresine otomatik eşitler">🔗 Sese Eşitle</button>
           </div>
 
           <div id="timecode-lbl" style="font-family:Consolas,monospace; font-size:13px; font-weight:700; color:var(--accent);">
@@ -726,6 +828,7 @@
             <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
               <input type="checkbox" id="chk-burn-subs" checked /> Altyazı
             </label>
+            <button class="render-btn" onclick="startBrowserRender()">🚀 Render Al (.MP4)</button>
           </div>
         </div>
       </main>
@@ -736,7 +839,7 @@
           ⚙️ Klip Özellikleri
         </div>
         <div id="insp-empty" style="font-size:12px; color:var(--muted);">
-          Düzenlemek için Timeline'dan bir klibe dokunun / tıklayın.
+          Düzenlemek, kırpmak veya bölmek için aşağıdaki Timeline'dan bir klibe dokunun / tıklayın.
         </div>
         <div id="insp-box" style="display:none; flex-direction:column; gap:8px; font-size:12px;">
           <div>
@@ -781,11 +884,12 @@
         <div style="display:flex; gap:6px; align-items:center;">
           <button onclick="splitAtPlayhead()">✂️ İmleçten Böl</button>
           <button onclick="packGapless()">🧲 Boşlukları Kapat</button>
+          <button onclick="syncVideosToVoiceover()">🔗 Video Süresini Sese Eşitle</button>
           <button onclick="deleteSelected()">🗑️ Sil</button>
         </div>
         <div style="display:flex; gap:6px; align-items:center; font-size:11px;">
           <span style="color:var(--muted);">Zoom:</span>
-          <input type="range" min="25" max="120" value="55" oninput="pxPerSec=Number(this.value); renderTimeline();" style="width:90px;" />
+          <input type="range" min="18" max="120" value="38" oninput="pxPerSec=Number(this.value); renderTimeline();" style="width:90px;" />
         </div>
       </div>
 
@@ -835,10 +939,6 @@
   </div>
 
   <script>
-    // =========================================================================
-    // 1. DEFAULT SCRIPT.MD & INDEXEDDB PERSISTENCE (SURVIVES MOBILE REFRESH)
-    // =========================================================================
-    const DEFAULT_FLOW_URL = "https://flow.google.com/project/d98f8df7-c977-46ba-8dd8-f39f24714571/tool/1af05941-50b5-4c91-b5d1-d4df10f10273";
     const DEFAULT_SCRIPT = `# Ya Sultan Alparslan Malazgirt’te Geri Çekilseydi?
 
 > **Konu:** malazgirt zaferi
@@ -863,7 +963,7 @@ Derin, epik, tok ve gizemli bir erkek sesi. Her sahnedeki 20-24 kelimelik metni 
 - **Türkçe Dış Ses:** "1071 yılında Malazgirt Ovası'nda yükselen toz bulutları, Türk ordusunun beklenmedik bir hamleyle geriye doğru çekildiğini fısıldıyordu."
 - **İngilizce Video Promptu:**
 \`\`\`text
-Vertical 9:16 format, 10-second silent video. Animation style: STRICTLY FLAT 2D cutout paper characters composited into a highly stylized 3D dimensional environment. Flat white circular heads, thick dark outlines, simple black oval eyes, thin line limbs, no character lighting or gradients. Environment is a stylized 3D Anatolian valley with grassy hills and dusty atmosphere. 0-3s: Flat 2D Sultan Alparslan on a flat black horse raises his sword, signaling a turn around. 3-7s: Flat 2D Seljuk cavalry turn their horses, retreating rapidly while kicking up 3D dust particles. 7-10s: Camera pans slowly across the retreating 2D army as 3D sun rays cut through heavy clouds. Hold final frame static for continuity.
+Vertical 9:16 format, 10-second silent video. Animation style: STRICTLY FLAT 2D cutout paper characters composited into a highly stylized 3D dimensional environment.
 \`\`\`
 
 ### Sahne 2 (00:10–00:20)
@@ -872,7 +972,7 @@ Vertical 9:16 format, 10-second silent video. Animation style: STRICTLY FLAT 2D 
 - **Türkçe Dış Ses:** "Bizans ordusu zafer sarhoşluğuyla ileri atılırken, bozkırın ortasında kurulan devasa stratejik tuzaktan tamamen habersiz bir şekilde ilerliyordu."
 - **İngilizce Video Promptu:**
 \`\`\`text
-Use the attached final-frame screenshot from the previous clip as the starting image to maintain 100% visual continuity. Vertical 9:16 format, 10-second silent video. Flat 2D cutout characters on stylized 3D scene. 0-3s: Flat 2D Byzantine soldiers with red cloaks advance rapidly across the 3D terrain, cheering as they believe the enemy is fleeing. 3-7s: The Byzantine ranks break formation, spreading out unevenly in the stylized 3D canyon. 7-10s: Wide angle shot shows the 2D Byzantine force completely entering a narrow passage surrounded by stylized 3D rocky cliffs. Hold final frame static for continuity.
+Use the attached final-frame screenshot from the previous clip as the starting image to maintain 100% visual continuity. Vertical 9:16 format, 10-second silent video.
 \`\`\`
 
 ### Sahne 3 (00:20–00:30)
@@ -881,22 +981,16 @@ Use the attached final-frame screenshot from the previous clip as the starting i
 - **Türkçe Dış Ses:** "Sultan Alparslan pusu noktasında kılıcını çektiğinde, tarih Anadolu'nun kapılarının bir daha kapanmamak üzere sonuna kadar açılışına tanıklık etti."
 - **İngilizce Video Promptu:**
 \`\`\`text
-Use the attached final-frame screenshot from the previous clip as the starting image to maintain 100% visual continuity. Vertical 9:16 format, 10-second silent video. Flat 2D cutout characters on stylized 3D scene. 0-3s: From the 3D hills, thousands of flat 2D archers appear, forming a complete crescent circle around the trapped enemy. 3-7s: Flat 2D Sultan Alparslan rides forward, signaling the final charge as stylized 3D golden arrows rain down. 7-10s: Camera zooms out dramatically showing the majestic crescent formation closed over the valley under a bright radiant sky. Hold final frame static.
+Use the attached final-frame screenshot from the previous clip as the starting image to maintain 100% visual continuity. Vertical 9:16 format, 10-second silent video.
 \`\`\``;
 
     let db = null;
     let mediaPool = {
-      videos: [], // [{ id, name, blob, url, duration, videoElem }]
-      audios: []  // [{ id, name, blob, url, duration, audioElem }]
+      videos: [],
+      audios: []
     };
     let parsedScenes = [];
-    let parsedMeta = {
-      projectTitle: '',
-      format: '9:16',
-      expectedClips: 3,
-      narratorTone: '',
-      fullNarration: ''
-    };
+    let currentVoxJsonString = '';
     let timeline = {
       videoClips: [],
       audioClips: [],
@@ -904,7 +998,7 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       subClips: []
     };
 
-    let pxPerSec = 55;
+    let pxPerSec = 38;
     let playheadSec = 0;
     let isPlaying = false;
     let isRendering = false;
@@ -919,6 +1013,207 @@ Use the attached final-frame screenshot from the previous clip as the starting i
     function round2(n) { return Math.round(n * 100) / 100; }
     function esc(s) { return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
+    // =========================================================================
+    // 1. WIZARD NAVIGATION (5 STEPS)
+    // =========================================================================
+    function goToStep(stepNum) {
+      [1, 2, 3, 4, 5].forEach(i => {
+        document.getElementById('nav-' + i).classList.toggle('active', i === stepNum);
+        document.getElementById('view-' + i).classList.toggle('active', i === stepNum);
+      });
+      if (stepNum === 2) {
+        onScriptChanged();
+        copyVoxJsonToClipboard(false);
+      } else if (stepNum === 5) {
+        renderTimeline();
+        drawCompositeFrame();
+      }
+    }
+
+    function proceedToStep3Tts() {
+      onScriptChanged();
+      copyVoxJsonToClipboard(true);
+      goToStep(3);
+    }
+
+    // =========================================================================
+    // 2. SCRIPT.MD -> EXACT VOXATELIER JSON CONVERTER
+    // =========================================================================
+    function convertScriptMdToVoxJson(mdText) {
+      const text = (mdText || '').trim();
+
+      // If the user already pasted valid JSON directly
+      if (text.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(text);
+          if (parsed && Array.isArray(parsed.clips)) return parsed;
+        } catch (e) {}
+      }
+
+      const titleMatch = text.match(/^#\s+(.+)$/m);
+      const title = titleMatch ? titleMatch[1].trim() : 'Flow Video Projesi';
+
+      const formatMatch = text.match(/\*\*Format:\*\*\s*([0-9:]+)/i);
+      const aspectRatio = formatMatch ? formatMatch[1].trim() : '9:16';
+
+      const sureMatch = text.match(/\*\*Toplam Süre:\*\*\s*(\d+)\s*Saniye(?:\s*\((\d+)\s*Klip\))?/i);
+      let totalDurationSec = sureMatch ? (parseInt(sureMatch[1], 10) || 30) : 30;
+      let expectedClips = (sureMatch && sureMatch[2]) ? (parseInt(sureMatch[2], 10) || 3) : 3;
+
+      let narratorToneRaw = '';
+      let fullNarratorScript = '';
+      const clips = [];
+
+      const sections = text.split(/^##\s+/m);
+      for (const sec of sections) {
+        const lines = sec.split(/\r?\n/);
+        const header = (lines[0] || '').trim();
+        const body = lines.slice(1).join('\n').trim();
+
+        if (/Anlatıcı Yönergesi/i.test(header)) {
+          narratorToneRaw = body.replace(/\r?\n/g, ' ').trim();
+        } else if (/Tam Türkçe Seslendirme Metni/i.test(header)) {
+          fullNarratorScript = body.replace(/\r?\n/g, ' ').trim();
+        } else if (/Sahne Kurgusu/i.test(header)) {
+          const sceneBlocks = body.split(/^###\s+/m).map(s => s.trim()).filter(Boolean);
+          sceneBlocks.forEach((sb, idx) => {
+            const sLines = sb.split(/\r?\n/);
+            const sHeader = sLines[0] || `Sahne ${idx + 1}`;
+            const sBody = sLines.slice(1).join('\n');
+
+            let startSec = idx * 10;
+            let endSec = (idx + 1) * 10;
+            let timeRangeStr = `${formatMMSS(startSec)}–${formatMMSS(endSec)}`;
+
+            const tm = sHeader.match(/\((\d+:\d+)\s*[–\-]\s*(\d+:\d+)\)/);
+            if (tm) {
+              timeRangeStr = `${tm[1]}–${tm[2]}`;
+              const p1 = tm[1].split(':').map(Number);
+              const p2 = tm[2].split(':').map(Number);
+              startSec = p1[0] * 60 + p1[1];
+              endSec = p2[0] * 60 + p2[1];
+            }
+
+            const baslikMatch = sBody.match(/\*\*Başlık:\*\*\s*(.+)/i);
+            const ozetMatch = sBody.match(/\*\*Görsel Özet:\*\*\s*(.+)/i);
+            const disSesMatch = sBody.match(/\*\*(?:Türkçe Dış Ses|Seslendirme|Dış Ses):\*\*\s*(.+)/i);
+
+            let narration = disSesMatch ? disSesMatch[1].trim() : '';
+            narration = narration.replace(/^["“”']+|["“”']+$/g, '').trim();
+
+            clips.push({
+              clip_number: idx + 1,
+              time_range: timeRangeStr,
+              start_seconds: startSec,
+              end_seconds: endSec,
+              duration_seconds: Math.max(1, endSec - startSec),
+              scene_title: baslikMatch ? baslikMatch[1].trim() : `Sahne ${idx + 1}`,
+              visual_description: ozetMatch ? ozetMatch[1].trim() : '',
+              narration_text: narration
+            });
+          });
+        }
+      }
+
+      if (clips.length > 0) {
+        expectedClips = clips.length;
+        totalDurationSec = clips.reduce((acc, c) => Math.max(acc, c.end_seconds), 0) || (clips.length * 10);
+      }
+
+      if (!fullNarratorScript && clips.length > 0) {
+        fullNarratorScript = clips.map(c => c.narration_text).filter(Boolean).join(' ');
+      }
+
+      // Split narratorToneRaw into voice_type and pacing cleanly
+      let voiceType = 'Derin, epik, tok ve gizemli bir erkek sesi';
+      let pacing = narratorToneRaw || 'Her sahnedeki metni sahne süresine yayarak, gerilim dolu ve dramatik bir ritimle oku.';
+      if (narratorToneRaw.includes('.')) {
+        const parts = narratorToneRaw.split('.');
+        voiceType = parts[0].trim();
+        pacing = parts.slice(1).join('.').trim() || narratorToneRaw;
+      }
+
+      return {
+        project: {
+          title: title,
+          language: 'tr',
+          aspect_ratio: aspectRatio,
+          total_duration_seconds: totalDurationSec,
+          clip_count: expectedClips
+        },
+        narration_direction: {
+          voice_type: voiceType,
+          style: 'Klasik tarihi belgesel anlatıcısı tonu',
+          pacing: pacing
+        },
+        full_narrator_script: fullNarratorScript,
+        clips: clips
+      };
+    }
+
+    function formatMMSS(sec) {
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = Math.floor(sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function onScriptChanged() {
+      const raw = document.getElementById('script-editor').value;
+      localStorage.setItem('flow_studio_script_md', raw);
+
+      const voxObj = convertScriptMdToVoxJson(raw);
+      currentVoxJsonString = JSON.stringify(voxObj, null, 2);
+      document.getElementById('vox-json-output').value = currentVoxJsonString;
+      document.getElementById('scenes-total-lbl').textContent = `${voxObj.clips.length} Klip (${voxObj.project.total_duration_seconds} sn • ${voxObj.project.aspect_ratio})`;
+      document.getElementById('nav-2').classList.add('done');
+
+      if (voxObj.project.aspect_ratio === '9:16') {
+        document.getElementById('render-aspect').value = '720x1280';
+        updateCanvasAspect();
+      } else if (voxObj.project.aspect_ratio === '16:9') {
+        document.getElementById('render-aspect').value = '1280x720';
+        updateCanvasAspect();
+      }
+
+      parsedScenes = voxObj.clips.map(c => ({
+        index: c.clip_number,
+        title: c.scene_title,
+        narration: c.narration_text,
+        startSec: c.start_seconds,
+        endSec: c.end_seconds,
+        duration: c.duration_seconds
+      }));
+    }
+
+    function copyVoxJsonToClipboard(showNotify) {
+      if (!currentVoxJsonString) onScriptChanged();
+      navigator.clipboard?.writeText(currentVoxJsonString).catch(() => {});
+      const ta = document.getElementById('vox-json-output');
+      if (ta) {
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+      }
+      if (showNotify) {
+        const badge = document.getElementById('json-copy-badge');
+        if (badge) badge.textContent = '✅ JSON Panoya Kopyalandı!';
+      }
+    }
+
+    function loadScriptFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        document.getElementById('script-editor').value = reader.result;
+        onScriptChanged();
+        copyVoxJsonToClipboard(true);
+      };
+      reader.readAsText(file);
+    }
+
+    // =========================================================================
+    // 3. INDEXEDDB & VIDEO / AUDIO FILE LOADERS
+    // =========================================================================
     function initIndexedDB() {
       return new Promise((resolve) => {
         const req = indexedDB.open('FlowStudioCloudDB', 1);
@@ -936,11 +1231,7 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       try {
         const tx = db.transaction('media', 'readwrite');
         tx.objectStore('media').put({
-          id: item.id,
-          kind: item.kind,
-          name: item.name,
-          duration: item.duration,
-          blob: item.blob
+          id: item.id, kind: item.kind, name: item.name, duration: item.duration, blob: item.blob
         });
       } catch (e) {}
     }
@@ -958,12 +1249,13 @@ Use the attached final-frame screenshot from the previous clip as the starting i
               const url = URL.createObjectURL(r.blob);
               if (r.kind === 'video') {
                 const vEl = await createHiddenVideoElement(url);
-                mediaPool.videos.push({ id: r.id, kind: 'video', name: r.name, blob: r.blob, url, duration: r.duration || vEl.duration || 5, videoElem: vEl });
+                mediaPool.videos.push({ id: r.id, kind: 'video', name: r.name, blob: r.blob, url, duration: r.duration || vEl.duration || 10, videoElem: vEl });
               } else {
                 const aEl = await createHiddenAudioElement(url);
-                mediaPool.audios.push({ id: r.id, kind: 'audio', name: r.name, blob: r.blob, url, duration: r.duration || aEl.duration || 4, audioElem: aEl });
+                mediaPool.audios.push({ id: r.id, kind: 'audio', name: r.name, blob: r.blob, url, duration: r.duration || aEl.duration || 30, audioElem: aEl });
               }
             }
+            mediaPool.videos.sort(naturalSortFiles);
             resolve();
           };
           req.onerror = () => resolve();
@@ -983,134 +1275,6 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       drawCompositeFrame();
     }
 
-    // =========================================================================
-    // 2. NAVIGATION & SCRIPT.MD PARSING
-    // =========================================================================
-    function switchMainView(idx) {
-      [1, 2, 3].forEach(i => {
-        document.getElementById('nav-' + i).classList.toggle('active', i === idx);
-        document.getElementById('view-' + i).classList.toggle('active', i === idx);
-      });
-      if (idx === 3) {
-        renderTimeline();
-        drawCompositeFrame();
-      }
-    }
-
-    function parseScriptScenes(text) {
-      const md = text || '';
-      const titleMatch = md.match(/^#\s+(.+)$/m);
-      parsedMeta.projectTitle = titleMatch ? titleMatch[1].trim() : '';
-
-      const formatMatch = md.match(/\*\*Format:\*\*\s*([0-9:]+)/i);
-      parsedMeta.format = formatMatch ? formatMatch[1].trim() : '9:16';
-
-      if (parsedMeta.format === '9:16') {
-        document.getElementById('render-aspect').value = '720x1280';
-        updateCanvasAspect();
-      } else if (parsedMeta.format === '16:9') {
-        document.getElementById('render-aspect').value = '1280x720';
-        updateCanvasAspect();
-      }
-
-      const list = [];
-      const sections = md.split(/^##\s+/m);
-      for (const sec of sections) {
-        const lines = sec.split(/\r?\n/);
-        const header = (lines[0] || '').trim();
-        const body = lines.slice(1).join('\n').trim();
-
-        if (/Anlatıcı Yönergesi/i.test(header)) {
-          parsedMeta.narratorTone = body;
-        } else if (/Tam Türkçe Seslendirme Metni/i.test(header)) {
-          parsedMeta.fullNarration = body;
-        } else if (/Sahne Kurgusu/i.test(header)) {
-          const sceneBlocks = body.split(/^###\s+/m).map(s => s.trim()).filter(Boolean);
-          sceneBlocks.forEach((sb, idx) => {
-            const sLines = sb.split(/\r?\n/);
-            const sHeader = sLines[0] || `Sahne ${idx + 1}`;
-            const sBody = sLines.slice(1).join('\n');
-
-            const baslikMatch = sBody.match(/\*\*Başlık:\*\*\s*(.+)/i);
-            const disSesMatch = sBody.match(/\*\*(?:Türkçe Dış Ses|Seslendirme|Dış Ses):\*\*\s*(.+)/i);
-            const promptCodeMatch = sBody.match(/```[a-z]*\s*([\s\S]*?)```/i);
-
-            let narration = disSesMatch ? disSesMatch[1].trim().replace(/^["“”']+|["“”']+$/g, '') : '';
-            let prompt = promptCodeMatch ? promptCodeMatch[1].trim() : '';
-
-            list.push({
-              title: baslikMatch ? baslikMatch[1].trim() : sHeader.trim(),
-              videoFileName: `video${idx + 1}.mp4`,
-              narration: narration,
-              prompt: prompt
-            });
-          });
-        }
-      }
-
-      if (!parsedMeta.fullNarration && list.length > 0) {
-        parsedMeta.fullNarration = list.map(s => s.narration).filter(Boolean).join(' ');
-      }
-      return list;
-    }
-
-    function onScriptChanged() {
-      const val = document.getElementById('script-editor').value;
-      localStorage.setItem('flow_studio_script_md', val);
-      parsedScenes = parseScriptScenes(val);
-      document.getElementById('scenes-total-lbl').textContent = parsedScenes.length;
-
-      const container = document.getElementById('scenes-list');
-      container.innerHTML = parsedScenes.map((s, idx) => `
-        <div class="scene-box">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-            <strong style="color:var(--accent);">🎬 video${idx + 1}.mp4 — ${esc(s.title)}</strong>
-            <div style="display:flex; gap:6px;">
-              <button onclick="copyPromptAndOpenFlow(${idx})" style="padding:4px 9px; font-size:11px;">
-                📋 Promptu Kopyala & Flow'u Aç
-              </button>
-            </div>
-          </div>
-          ${s.narration ? `<div style="color:#d2a8ff;"><strong>🎙️ Türkçe Dış Ses:</strong> "${esc(s.narration)}"</div>` : ''}
-          ${s.prompt ? `<div style="color:var(--muted); font-size:11px;"><strong>İngilizce Prompt:</strong> ${esc(s.prompt)}</div>` : ''}
-        </div>
-      `).join('');
-    }
-
-    function copyPromptAndOpenFlow(idx) {
-      const s = parsedScenes[idx];
-      if (!s) return;
-      const p = s.prompt || s.narration;
-      navigator.clipboard?.writeText(p).catch(() => {});
-      window.open(DEFAULT_FLOW_URL, '_blank');
-    }
-
-    function openGoogleFlowProject() {
-      window.open(DEFAULT_FLOW_URL, '_blank');
-    }
-
-    function loadScriptFile(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        document.getElementById('script-editor').value = reader.result;
-        onScriptChanged();
-      };
-      reader.readAsText(file);
-    }
-
-    function downloadScriptFile() {
-      const blob = new Blob([document.getElementById('script-editor').value], { type: 'text/markdown' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'script.md';
-      a.click();
-    }
-
-    // =========================================================================
-    // 3. VIDEO & AUDIO IMPORT + EMBEDDED TTS SITE BRIDGE
-    // =========================================================================
     function createHiddenVideoElement(url) {
       return new Promise((resolve) => {
         const v = document.createElement('video');
@@ -1148,6 +1312,7 @@ Use the attached final-frame screenshot from the previous clip as the starting i
         saveMediaBlobToDB(item);
       }
       mediaPool.videos.sort(naturalSortFiles);
+      document.getElementById('nav-1').classList.add('done');
       refreshAllLists();
       autoAssembleAllToTimeline();
     }
@@ -1157,229 +1322,21 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       for (const f of files) {
         const url = URL.createObjectURL(f);
         const aEl = await createHiddenAudioElement(url);
-        const dur = round1(Math.max(1, aEl.duration || 10));
+        const dur = round1(Math.max(1, aEl.duration || 30));
         const item = { id: uid('aud'), kind: 'audio', name: f.name, blob: f, url, duration: dur, audioElem: aEl };
         mediaPool.audios.push(item);
         saveMediaBlobToDB(item);
       }
-      mediaPool.audios.sort(naturalSortFiles);
+      document.getElementById('nav-4').classList.add('done');
       refreshAllLists();
       autoAssembleAllToTimeline();
     }
 
-    function saveAndLoadTtsSite() {
-      let url = document.getElementById('tts-site-url').value.trim();
-      if (!url) return;
-      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-      document.getElementById('tts-site-url').value = url;
-      localStorage.setItem('flow_studio_tts_url', url);
-      document.getElementById('tts-iframe').src = url;
+    async function handleAudioFilesSelectedAndAdvance(fileList) {
+      await handleAudioFilesSelected(fileList);
+      goToStep(5);
     }
 
-    function sendScriptToEmbeddedTts() {
-      const fullNarration = parsedMeta.fullNarration
-        || parsedScenes.map(s => s.narration).filter(Boolean).join(' ')
-        || document.getElementById('script-editor').value;
-      const iframe = document.getElementById('tts-iframe');
-      if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage({
-          type: 'FLOW_STUDIO_SCRIPT',
-          text: fullNarration,
-          narratorTone: parsedMeta.narratorTone,
-          scenes: parsedScenes
-        }, '*');
-      }
-    }
-
-    async function runAutomatedVoiceover() {
-      switchMainView(2);
-      const savedUrl = localStorage.getItem('flow_studio_tts_url');
-      if (savedUrl) {
-        sendScriptToEmbeddedTts();
-      }
-      await synthesizeBrowserWavForScenes();
-    }
-
-    // Listen for audio messages sent from the user's embedded TTS website
-    window.addEventListener('message', async (e) => {
-      if (!e.data) return;
-      if (e.data.type === 'FLOW_STUDIO_AUDIO' && (e.data.blob || e.data.url)) {
-        let blob = e.data.blob;
-        if (!blob && e.data.url) {
-          try { const r = await fetch(e.data.url); blob = await r.blob(); } catch (err) {}
-        }
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const aEl = await createHiddenAudioElement(url);
-          const item = {
-            id: uid('aud'),
-            kind: 'audio',
-            name: e.data.fileName || `seslendirme_${mediaPool.audios.length + 1}.mp3`,
-            blob,
-            url,
-            duration: round1(Math.max(1, aEl.duration || 4)),
-            audioElem: aEl
-          };
-          mediaPool.audios.push(item);
-          saveMediaBlobToDB(item);
-          refreshAllLists();
-          autoAssembleAllToTimeline();
-          switchMainView(3);
-        }
-      }
-    });
-
-    // Built-in Browser WAV Generator for instant serverless scene voiceovers
-    async function synthesizeBrowserWavForScenes() {
-      if (parsedScenes.length === 0) onScriptChanged();
-      mediaPool.audios = [];
-
-      for (let i = 0; i < parsedScenes.length; i++) {
-        const nar = parsedScenes[i].narration || parsedScenes[i].prompt || `Sahne ${i + 1}`;
-        const dur = round1(Math.max(2.8, Math.min(10, nar.length * 0.06)));
-        const wavBlob = createSpeechCadenceWavBlob(dur, 175 + i * 18);
-        const url = URL.createObjectURL(wavBlob);
-        const aEl = await createHiddenAudioElement(url);
-        const item = {
-          id: uid('aud'),
-          kind: 'audio',
-          name: `ses_sahne_0${i + 1}.wav`,
-          blob: wavBlob,
-          url,
-          duration: dur,
-          audioElem: aEl
-        };
-        mediaPool.audios.push(item);
-        saveMediaBlobToDB(item);
-      }
-      refreshAllLists();
-      autoAssembleAllToTimeline();
-      switchMainView(3);
-    }
-
-    function createSpeechCadenceWavBlob(durationSec, baseFreq) {
-      const sampleRate = 44100;
-      const numSamples = Math.floor(sampleRate * durationSec);
-      const buffer = new ArrayBuffer(44 + numSamples * 2);
-      const view = new DataView(buffer);
-
-      function writeStr(offset, str) {
-        for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
-      }
-      writeStr(0, 'RIFF');
-      view.setUint32(4, 36 + numSamples * 2, true);
-      writeStr(8, 'WAVEfmt ');
-      view.setUint32(16, 16, true);
-      view.setUint16(20, 1, true);
-      view.setUint16(22, 1, true);
-      view.setUint32(24, sampleRate, true);
-      view.setUint32(28, sampleRate * 2, true);
-      view.setUint16(32, 2, true);
-      view.setUint16(34, 16, true);
-      writeStr(36, 'data');
-      view.setUint32(40, numSamples * 2, true);
-
-      for (let i = 0; i < numSamples; i++) {
-        const t = i / sampleRate;
-        const syllableEnv = Math.max(0, Math.sin(Math.PI * ((t * 3.2) % 1)));
-        const pitch = baseFreq + 25 * Math.sin(2 * Math.PI * 1.5 * t);
-        const val = 0.25 * syllableEnv * (Math.sin(2 * Math.PI * pitch * t) + 0.45 * Math.sin(2 * Math.PI * pitch * 2 * t));
-        view.setInt16(44 + i * 2, Math.floor(val * 32767), true);
-      }
-      return new Blob([buffer], { type: 'audio/wav' });
-    }
-
-    // Generate complete procedural test videos + voiceovers in-browser for immediate phone/PC testing!
-    async function generateDemoCloudProject() {
-      if (parsedScenes.length === 0) onScriptChanged();
-      mediaPool.videos = [];
-      mediaPool.audios = [];
-
-      const palettes = [
-        ['#0a2540', '#00b4d8'],
-        ['#1f1147', '#7c4dff'],
-        ['#0d3b2e', '#00e676']
-      ];
-
-      for (let i = 0; i < parsedScenes.length; i++) {
-        const s = parsedScenes[i];
-        const dur = 3.5;
-        const wavBlob = createSpeechCadenceWavBlob(dur, 180 + i * 20);
-        const aUrl = URL.createObjectURL(wavBlob);
-        const aEl = await createHiddenAudioElement(aUrl);
-        const aItem = { id: uid('aud'), kind: 'audio', name: `ses_sahne_0${i + 1}.wav`, blob: wavBlob, url: aUrl, duration: dur, audioElem: aEl };
-        mediaPool.audios.push(aItem);
-        saveMediaBlobToDB(aItem);
-
-        const vBlob = await generateProceduralSceneVideoBlob(i + 1, s.title, s.prompt || s.narration, palettes[i % palettes.length], 1.2);
-        const vUrl = URL.createObjectURL(vBlob);
-        const vEl = await createHiddenVideoElement(vUrl);
-        vEl.loop = true;
-        const vItem = { id: uid('vid'), kind: 'video', name: `flow_sahne_0${i + 1}.webm`, blob: vBlob, url: vUrl, duration: dur, videoElem: vEl };
-        mediaPool.videos.push(vItem);
-        saveMediaBlobToDB(vItem);
-      }
-
-      refreshAllLists();
-      autoAssembleAllToTimeline();
-      switchMainView(3);
-    }
-
-    function generateProceduralSceneVideoBlob(sceneNum, title, prompt, colors, recordDurSec) {
-      return new Promise((resolve) => {
-        const c = document.createElement('canvas');
-        c.width = 854;
-        c.height = 480;
-        const cx = c.getContext('2d');
-        const stream = c.captureStream(30);
-        const mime = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
-        const rec = new MediaRecorder(stream, { mimeType: mime });
-        const chunks = [];
-        rec.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
-        rec.onstop = () => resolve(new Blob(chunks, { type: mime }));
-        rec.start();
-
-        let frame = 0;
-        const totalFrames = Math.floor(recordDurSec * 30);
-        function step() {
-          const p = frame / totalFrames;
-          const grad = cx.createLinearGradient(0, 0, c.width, c.height);
-          grad.addColorStop(0, colors[0]);
-          grad.addColorStop(1, '#090d16');
-          cx.fillStyle = grad;
-          cx.fillRect(0, 0, c.width, c.height);
-
-          // Animated glowing orb
-          cx.fillStyle = colors[1];
-          cx.globalAlpha = 0.28;
-          cx.beginPath();
-          cx.arc(200 + p * 420, 240 + Math.sin(p * Math.PI * 2) * 55, 110, 0, Math.PI * 2);
-          cx.fill();
-          cx.globalAlpha = 1;
-
-          cx.strokeStyle = colors[1];
-          cx.lineWidth = 3;
-          cx.strokeRect(36, 36, c.width - 72, c.height - 72);
-
-          cx.fillStyle = '#fff';
-          cx.font = 'bold 28px Segoe UI, sans-serif';
-          cx.fillText(`FLOW SAHNE ${sceneNum}: ${title}`, 65, 110);
-
-          cx.fillStyle = '#a5d6ff';
-          cx.font = '18px Segoe UI, sans-serif';
-          cx.fillText((prompt || '').substring(0, 68), 65, 155);
-
-          frame++;
-          if (frame <= totalFrames) requestAnimationFrame(step);
-          else rec.stop();
-        }
-        step();
-      });
-    }
-
-    // =========================================================================
-    // 4. CAPCUT TIMELINE & COMPOSITE CANVAS PREVIEW
-    // =========================================================================
     function refreshAllLists() {
       document.getElementById('badge-vid-count').textContent = mediaPool.videos.length;
       document.getElementById('badge-aud-count').textContent = mediaPool.audios.length;
@@ -1388,20 +1345,24 @@ Use the attached final-frame screenshot from the previous clip as the starting i
 
       const vHtml = mediaPool.videos.map((v, idx) => `
         <div class="media-item">
-          <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">🎬 ${esc(v.name)} (${v.duration}s)</span>
-          <button onclick="addPoolItemToTimeline('video', ${idx})">+ Ekle</button>
+          <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+            <strong style="color:var(--accent);">Sahne ${idx + 1}:</strong> 🎬 ${esc(v.name)} (${v.duration} sn)
+          </span>
+          <button onclick="addPoolItemToTimeline('video', ${idx})">+ Timeline</button>
         </div>
-      `).join('') || '<div style="font-size:12px; color:var(--muted);">Henüz video yok.</div>';
+      `).join('') || '<div style="font-size:12px; color:var(--muted);">Henüz video yüklenmedi.</div>';
 
       const aHtml = mediaPool.audios.map((a, idx) => `
         <div class="media-item">
-          <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">🎙️ ${esc(a.name)} (${a.duration}s)</span>
+          <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+            🎙️ ${esc(a.name)} (${a.duration} sn)
+          </span>
           <div style="display:flex; gap:4px;">
-            <button onclick="addPoolItemToTimeline('audio', ${idx})">+ Ses</button>
-            <button onclick="addPoolItemToTimeline('bgm', ${idx})">🎵</button>
+            <button onclick="addPoolItemToTimeline('audio', ${idx})">+ Ses Kanalı</button>
+            <button onclick="addPoolItemToTimeline('bgm', ${idx})">🎵 Müzik</button>
           </div>
         </div>
-      `).join('') || '<div style="font-size:12px; color:var(--muted);">Henüz ses yok.</div>';
+      `).join('') || '<div style="font-size:12px; color:var(--muted);">Henüz ses dosyası yüklenmedi.</div>';
 
       document.getElementById('hub-video-list').innerHTML = vHtml;
       document.getElementById('editor-video-pool').innerHTML = vHtml;
@@ -1409,6 +1370,9 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       document.getElementById('editor-audio-pool').innerHTML = aHtml;
     }
 
+    // =========================================================================
+    // 4. CAPCUT TIMELINE & COMPOSITE CANVAS PREVIEW
+    // =========================================================================
     function getTrackEnd(arr) {
       if (!arr || arr.length === 0) return 0;
       return Math.max(...arr.map(c => c.start + c.duration));
@@ -1442,14 +1406,17 @@ Use the attached final-frame screenshot from the previous clip as the starting i
     }
 
     function autoAssembleAllToTimeline() {
+      if (parsedScenes.length === 0) onScriptChanged();
       timeline.videoClips = [];
       timeline.audioClips = [];
       timeline.subClips = [];
 
       let vt = 0;
-      mediaPool.videos.forEach(v => {
+      mediaPool.videos.forEach((v, idx) => {
+        const sc = parsedScenes[idx];
         timeline.videoClips.push({
-          id: uid('vc'), track: 'video', mediaId: v.id, name: v.name,
+          id: uid('vc'), track: 'video', mediaId: v.id,
+          name: sc ? `${v.name} (${sc.title})` : v.name,
           start: round1(vt), duration: v.duration, trimIn: 0, speed: 1
         });
         vt += v.duration;
@@ -1467,9 +1434,9 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       let st = 0;
       parsedScenes.forEach((s, i) => {
         if (!s.narration) return;
-        const ref = timeline.audioClips[i] || timeline.videoClips[i];
-        const start = ref ? ref.start : st;
-        const dur = ref ? ref.duration : 3.5;
+        const refVid = timeline.videoClips[i];
+        const start = refVid ? refVid.start : (s.startSec !== undefined ? s.startSec : st);
+        const dur = refVid ? refVid.duration : (s.duration || 10);
         timeline.subClips.push({
           id: uid('sc'), track: 'sub', name: s.title, text: s.narration,
           start: round1(start), duration: round1(dur)
@@ -1484,20 +1451,39 @@ Use the attached final-frame screenshot from the previous clip as the starting i
 
     function syncVideosToVoiceover() {
       if (timeline.videoClips.length === 0 || timeline.audioClips.length === 0) return;
-      let cur = 0;
-      timeline.videoClips.forEach((vc, idx) => {
-        const ac = timeline.audioClips[idx];
-        if (ac) {
-          ac.start = round1(cur);
+      if (timeline.audioClips.length === 1) {
+        // Full WAV single audio file: fit all video clips proportionally to total voiceover duration
+        const totalAud = timeline.audioClips[0].duration;
+        const eachDur = round1(totalAud / timeline.videoClips.length);
+        let cur = 0;
+        timeline.videoClips.forEach((vc, idx) => {
+          const media = mediaPool.videos.find(m => m.id === vc.mediaId);
+          const origDur = media ? media.duration : vc.duration;
+          vc.speed = round2(Math.min(2.5, Math.max(0.4, origDur / eachDur)));
           vc.start = round1(cur);
-          vc.duration = ac.duration;
+          vc.duration = eachDur;
           if (timeline.subClips[idx]) {
             timeline.subClips[idx].start = round1(cur);
-            timeline.subClips[idx].duration = ac.duration;
+            timeline.subClips[idx].duration = eachDur;
           }
-          cur += ac.duration;
-        }
-      });
+          cur += eachDur;
+        });
+      } else {
+        let cur = 0;
+        timeline.videoClips.forEach((vc, idx) => {
+          const ac = timeline.audioClips[idx];
+          if (ac) {
+            ac.start = round1(cur);
+            vc.start = round1(cur);
+            vc.duration = ac.duration;
+            if (timeline.subClips[idx]) {
+              timeline.subClips[idx].start = round1(cur);
+              timeline.subClips[idx].duration = ac.duration;
+            }
+            cur += ac.duration;
+          }
+        });
+      }
       renderTimeline();
       drawCompositeFrame();
     }
@@ -1548,7 +1534,6 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       }).join('');
     }
 
-    // Unified Pointer Events for Touch (Phone) & Mouse (Desktop) Timeline Control
     document.getElementById('timeline-canvas').addEventListener('pointerdown', (e) => {
       const trimSide = e.target.getAttribute('data-trim');
       const clipEl = e.target.closest('.timeline-clip');
@@ -1739,11 +1724,10 @@ Use the attached final-frame screenshot from the previous clip as the starting i
     }
 
     function syncMediaElementsToPlayhead(forceSeek) {
-      // Video sync
       const activeVC = timeline.videoClips.find(c => playheadSec >= c.start && playheadSec < c.start + c.duration);
       mediaPool.videos.forEach(m => {
         if (activeVC && activeVC.mediaId === m.id && m.videoElem) {
-          const targetT = ((activeVC.trimIn || 0) + (playheadSec - activeVC.start) * (activeVC.speed || 1)) % Math.max(0.5, m.videoElem.duration || 5);
+          const targetT = ((activeVC.trimIn || 0) + (playheadSec - activeVC.start) * (activeVC.speed || 1)) % Math.max(0.5, m.videoElem.duration || 10);
           if (forceSeek || Math.abs(m.videoElem.currentTime - targetT) > 0.35) {
             try { m.videoElem.currentTime = targetT; } catch (e) {}
           }
@@ -1754,7 +1738,6 @@ Use the attached final-frame screenshot from the previous clip as the starting i
         }
       });
 
-      // Audio sync (when not using WebAudio offline scheduler)
       if (!isRendering) {
         const activeAC = timeline.audioClips.find(c => playheadSec >= c.start && playheadSec < c.start + c.duration);
         mediaPool.audios.forEach(m => {
@@ -1775,13 +1758,12 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       ctx.fillStyle = '#05070b';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // 1. Draw Active Video Clip
       const activeVC = timeline.videoClips.find(c => playheadSec >= c.start && playheadSec < c.start + c.duration);
       if (activeVC) {
         const media = mediaPool.videos.find(m => m.id === activeVC.mediaId);
         if (media && media.videoElem && media.videoElem.readyState >= 2) {
-          const vw = media.videoElem.videoWidth || 1280;
-          const vh = media.videoElem.videoHeight || 720;
+          const vw = media.videoElem.videoWidth || 720;
+          const vh = media.videoElem.videoHeight || 1280;
           const scale = Math.min(canvas.width / vw, canvas.height / vh);
           const dw = vw * scale;
           const dh = vh * scale;
@@ -1791,26 +1773,25 @@ Use the attached final-frame screenshot from the previous clip as the starting i
         }
       } else {
         ctx.fillStyle = '#4b5563';
-        ctx.font = 'bold 24px Segoe UI, sans-serif';
+        ctx.font = 'bold 22px Segoe UI, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('FlowVideoStudio Cloud — Timeline Önizleme', canvas.width / 2, canvas.height / 2);
+        ctx.fillText('CapCut Timeline Önizleme', canvas.width / 2, canvas.height / 2);
       }
 
-      // 2. Draw Burned-in CapCut Subtitles
       if (document.getElementById('chk-burn-subs').checked) {
         const activeSub = timeline.subClips.find(s => playheadSec >= s.start && playheadSec < s.start + s.duration);
         if (activeSub && activeSub.text) {
-          const fontSize = Math.round(canvas.height * 0.038);
+          const fontSize = Math.round(canvas.width * 0.042);
           ctx.font = `bold ${fontSize}px Segoe UI, sans-serif`;
           ctx.textAlign = 'center';
-          const maxWidth = canvas.width * 0.84;
+          const maxWidth = canvas.width * 0.86;
           const lines = wrapText(ctx, activeSub.text, maxWidth);
-          const lineHeight = fontSize * 1.32;
-          const boxHeight = lines.length * lineHeight + 20;
-          const boxY = canvas.height - boxHeight - canvas.height * 0.06;
+          const lineHeight = fontSize * 1.35;
+          const boxHeight = lines.length * lineHeight + 22;
+          const boxY = canvas.height - boxHeight - canvas.height * 0.08;
 
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-          ctx.fillRect(canvas.width * 0.08, boxY, canvas.width * 0.84, boxHeight);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.78)';
+          ctx.fillRect(canvas.width * 0.06, boxY, canvas.width * 0.88, boxHeight);
 
           ctx.fillStyle = '#ffffff';
           lines.forEach((line, i) => {
@@ -1837,13 +1818,12 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       return lines;
     }
 
-    // 100% Browser-Based Multi-Track Render (Canvas + WebAudio Mixer -> MP4 / WebM)
     let activeRecorder = null;
     async function startBrowserRender() {
       pausePlayback();
       const total = getTotalDuration();
       if (total <= 0) {
-        alert('Render almak için önce Timeline\'a video/ses ekleyin veya "Test Sahnesi Üret" butonuna basın.');
+        alert('Render almak için önce videoları ve ses dosyasını yükleyin.');
         return;
       }
 
@@ -1853,7 +1833,6 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       document.getElementById('rendered-result-video').style.display = 'none';
       document.getElementById('render-download-wrap').style.display = 'none';
 
-      // Create WebAudio Graph and schedule all timeline audio & BGM clips with sample accuracy
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       const audioCtx = new AudioCtx();
       const destNode = audioCtx.createMediaStreamDestination();
@@ -1888,7 +1867,7 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       const chunks = [];
       activeRecorder = new MediaRecorder(combinedStream, {
         mimeType: MediaRecorder.isTypeSupported(mime) ? mime : undefined,
-        videoBitsPerSecond: 5000000
+        videoBitsPerSecond: 6000000
       });
 
       activeRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
@@ -1926,63 +1905,79 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       document.getElementById('render-modal').classList.remove('open');
     }
 
-    // =========================================================================
-    // 6. CROSS-DEVICE PROJECT JSON EXPORT / IMPORT
-    // =========================================================================
-    function exportProjectJson() {
-      const data = {
-        scriptMd: document.getElementById('script-editor').value,
-        ttsUrl: document.getElementById('tts-site-url').value,
-        timeline: timeline
-      };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'flow_studio_project.json';
-      a.click();
+    // Procedural demo generator for quick 1-click testing
+    async function generateDemoCloudProject() {
+      if (parsedScenes.length === 0) onScriptChanged();
+      mediaPool.videos = [];
+      const palettes = [['#0a2540', '#00b4d8'], ['#1f1147', '#7c4dff'], ['#0d3b2e', '#00e676']];
+      for (let i = 0; i < parsedScenes.length; i++) {
+        const s = parsedScenes[i];
+        const vBlob = await generateProceduralSceneVideoBlob(i + 1, s.title, palettes[i % palettes.length], 1.2);
+        const vUrl = URL.createObjectURL(vBlob);
+        const vEl = await createHiddenVideoElement(vUrl);
+        vEl.loop = true;
+        const vItem = { id: uid('vid'), kind: 'video', name: `video${i + 1}.mp4`, blob: vBlob, url: vUrl, duration: s.duration || 10, videoElem: vEl };
+        mediaPool.videos.push(vItem);
+        saveMediaBlobToDB(vItem);
+      }
+      document.getElementById('nav-1').classList.add('done');
+      refreshAllLists();
+      autoAssembleAllToTimeline();
     }
 
-    function importProjectJson(e) {
-      const f = e.target.files[0];
-      if (!f) return;
-      const r = new FileReader();
-      r.onload = () => {
-        try {
-          const data = JSON.parse(r.result);
-          if (data.scriptMd) {
-            document.getElementById('script-editor').value = data.scriptMd;
-            onScriptChanged();
-          }
-          if (data.ttsUrl) {
-            document.getElementById('tts-site-url').value = data.ttsUrl;
-            saveAndLoadTtsSite();
-          }
-          if (data.timeline) {
-            timeline = data.timeline;
-            renderTimeline();
-          }
-        } catch (err) { alert('Geçersiz proje dosyası.'); }
-      };
-      r.readAsText(f);
+    function generateProceduralSceneVideoBlob(sceneNum, title, colors, recordDurSec) {
+      return new Promise((resolve) => {
+        const c = document.createElement('canvas');
+        c.width = 480;
+        c.height = 854;
+        const cx = c.getContext('2d');
+        const stream = c.captureStream(30);
+        const mime = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : 'video/webm';
+        const rec = new MediaRecorder(stream, { mimeType: mime });
+        const chunks = [];
+        rec.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+        rec.onstop = () => resolve(new Blob(chunks, { type: mime }));
+        rec.start();
+
+        let frame = 0;
+        const totalFrames = Math.floor(recordDurSec * 30);
+        function step() {
+          const p = frame / totalFrames;
+          const grad = cx.createLinearGradient(0, 0, c.width, c.height);
+          grad.addColorStop(0, colors[0]);
+          grad.addColorStop(1, '#090d16');
+          cx.fillStyle = grad;
+          cx.fillRect(0, 0, c.width, c.height);
+
+          cx.fillStyle = colors[1];
+          cx.globalAlpha = 0.3;
+          cx.beginPath();
+          cx.arc(240, 260 + p * 280, 110, 0, Math.PI * 2);
+          cx.fill();
+          cx.globalAlpha = 1;
+
+          cx.fillStyle = '#fff';
+          cx.font = 'bold 26px Segoe UI, sans-serif';
+          cx.textAlign = 'center';
+          cx.fillText(`video${sceneNum}.mp4`, 240, 140);
+          cx.font = '20px Segoe UI, sans-serif';
+          cx.fillText(title, 240, 180);
+
+          frame++;
+          if (frame <= totalFrames) requestAnimationFrame(step);
+          else rec.stop();
+        }
+        step();
+      });
     }
 
-    // =========================================================================
-    // INIT ON LOAD
-    // =========================================================================
     window.addEventListener('DOMContentLoaded', async () => {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').catch(() => {});
       }
-
       const savedScript = localStorage.getItem('flow_studio_script_md') || DEFAULT_SCRIPT;
       document.getElementById('script-editor').value = savedScript;
       onScriptChanged();
-
-      const savedTts = localStorage.getItem('flow_studio_tts_url') || '';
-      if (savedTts) {
-        document.getElementById('tts-site-url').value = savedTts;
-        document.getElementById('tts-iframe').src = savedTts;
-      }
 
       await initIndexedDB();
       await loadMediaFromDB();

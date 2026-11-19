@@ -630,13 +630,14 @@
 
         <textarea class="script-textarea" id="script-md-editor" oninput="parseScriptMdLive()"></textarea>
 
-        <div style="background:var(--bg-panel-2); border:1px solid var(--border); border-radius:6px; padding:8px; font-size:11px;">
-          <div style="color:var(--accent); font-weight:700; margin-bottom:3px;">🎙️ Tam Türkçe Seslendirme Metni (Sitenize Gönderilecek Saf Metin):</div>
-          <div id="clean-narration-preview" style="color:#e6edf3; max-height:70px; overflow-y:auto;"></div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:11px; font-weight:700; color:#fcd34d;">⚡ Otomatik Üretilen VoxAtelier JSON:</span>
+          <button onclick="copyTextById('clean-narration-preview')" style="padding:2px 8px; font-size:10.5px;">📋 JSON Kopyala</button>
         </div>
+        <textarea id="clean-narration-preview" class="script-textarea" style="height:105px; color:#fcd34d; background:#07090e;" readonly></textarea>
 
         <div style="display:flex; gap:6px; flex-wrap:wrap;">
-          <button class="primary" style="flex:1;" onclick="sendScriptToTtsSite()">🔊 Sadece Seslendirme Metnini Siteme Gönder & Seslendir</button>
+          <button class="primary" style="flex:1;" onclick="sendScriptToTtsSite()">🔊 Seçili Ses İle JSON Yapıştır & Seslendir ➔</button>
         </div>
 
         <div style="font-size:11px; font-weight:700; color:var(--muted); margin-top:2px;">
@@ -1011,7 +1012,41 @@
 
       document.getElementById('script-title-lbl').textContent = parsedScript.projectTitle || 'script.md';
       document.getElementById('scene-count-label').textContent = parsedScript.scenes.length;
-      document.getElementById('clean-narration-preview').textContent = parsedScript.fullNarration || '(Seslendirme metni bulunamadı)';
+
+      let voiceType = 'Derin, epik, tok ve gizemli bir erkek sesi';
+      let pacing = parsedScript.narratorTone || 'Her sahnedeki metni sahne süresine yayarak, gerilim dolu ve dramatik bir ritimle oku.';
+      if (parsedScript.narratorTone && parsedScript.narratorTone.includes('.')) {
+        const parts = parsedScript.narratorTone.split('.');
+        voiceType = parts[0].trim();
+        pacing = parts.slice(1).join('.').trim() || parsedScript.narratorTone;
+      }
+
+      const voxJsonObj = {
+        project: {
+          title: parsedScript.projectTitle || 'Flow Video Projesi',
+          language: 'tr',
+          aspect_ratio: parsedScript.format || '9:16',
+          total_duration_seconds: parsedScript.totalDurationSec || (parsedScript.scenes.length * 10),
+          clip_count: parsedScript.scenes.length || 3
+        },
+        narration_direction: {
+          voice_type: voiceType,
+          style: 'Klasik tarihi belgesel anlatıcısı tonu',
+          pacing: pacing
+        },
+        full_narrator_script: parsedScript.fullNarration,
+        clips: parsedScript.scenes.map((s, idx) => ({
+          clip_number: idx + 1,
+          time_range: `${String(Math.floor(s.startSec / 60)).padStart(2, '0')}:${String(s.startSec % 60).padStart(2, '0')}–${String(Math.floor(s.endSec / 60)).padStart(2, '0')}:${String(s.endSec % 60).padStart(2, '0')}`,
+          start_seconds: s.startSec,
+          end_seconds: s.endSec,
+          duration_seconds: s.duration,
+          scene_title: s.title,
+          visual_description: s.visualSummary || '',
+          narration_text: s.narration
+        }))
+      };
+      document.getElementById('clean-narration-preview').value = JSON.stringify(voxJsonObj, null, 2);
 
       // Auto-select 9:16 or 16:9 based on script.md Format field
       if (parsedScript.format === '9:16') {
