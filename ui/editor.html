@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlowVideoStudio - CapCut Kurgu & Render Stüdyosu</title>
+  <style>
+    :root {
+      --bg-dark: #0a0c10;
+      --bg-panel: #12161f;
+      --bg-panel-2: #181e2a;
+      --bg-track: #0e121a;
+      --border: #252e3f;
+      --accent: #00e5ff;
+      --accent-purple: #7c4dff;
+      --playhead: #ff3b5c;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --success: #00e676;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    input, textarea, select { user-select: text; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* TOP STUDIO HEADER */
+    .studio-header {
+      height: 50px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .pipeline-steps {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+    }
+    .step-pill {
+      background: var(--bg-panel-2);
+      border: 1px solid var(--border);
+      padding: 5px 10px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+    }
+    .step-pill.active {
+      border-color: var(--accent);
+      color: #fff;
+      background: rgba(0, 229, 255, 0.1);
+    }
+    .step-pill.done {
+      border-color: var(--success);
+      color: var(--success);
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    button, .btn {
+      background: var(--bg-panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+    }
+    button:hover { border-color: var(--accent); color: #fff; }
+    button.primary {
+      background: linear-gradient(135deg, #00b4d8, #7c4dff);
+      border: none;
+      color: #fff;
+      padding: 7px 14px;
+    }
+    button.render-btn {
+      background: linear-gradient(135deg, #ff3b5c, #ff7b00);
+      border: none;
+      color: #fff;
+      padding: 8px 16px;
+      font-size: 13px;
+      box-shadow: 0 4px 14px rgba(255, 59, 92, 0.35);
+    }
+    select, input[type="text"], input[type="number"] {
+      background: var(--bg-dark);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      outline: none;
+    }
+
+    /* UPPER 3-COLUMN WORKSPACE */
+    .upper-workspace {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* LEFT PANEL: MEDIA & SCRIPT.MD */
+    .left-panel {
+      width: 390px;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .panel-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-dark);
+    }
+    .panel-tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    .panel-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      background: var(--bg-panel);
+    }
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .tab-content.active { display: flex; }
+
+    .media-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .media-card {
+      background: var(--bg-panel-2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+    }
+    .media-card:hover { border-color: var(--accent); }
+    .media-info {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      flex: 1;
+    }
+    .media-name {
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #fff;
+    }
+    .media-meta { font-size: 11px; color: var(--muted); }
+    .script-textarea {
+      width: 100%;
+      height: 150px;
+      background: var(--bg-dark);
+      color: #d2a8ff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px;
+      font-family: 'Consolas', monospace;
+      font-size: 11.5px;
+      resize: vertical;
+    }
+    .parsed-scene-card {
+      background: var(--bg-panel-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px;
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .meta-badge {
+      display: inline-block;
+      background: rgba(0, 229, 255, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(0, 229, 255, 0.3);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 600;
+    }
+
+    /* CENTER PANEL: VIDEO PREVIEW */
+    .center-panel {
+      flex: 1;
+      background: #06080c;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      min-width: 0;
+    }
+    .preview-stage-wrapper {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      min-height: 0;
+    }
+    .preview-stage {
+      background: #000;
+      border: 1px solid #222a38;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.7);
+      width: 100%;
+      max-width: 680px;
+      aspect-ratio: 16 / 9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .preview-stage.portrait {
+      height: 100%;
+      width: auto;
+      max-width: 310px;
+      aspect-ratio: 9 / 16;
+    }
+    #preview-video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: #000;
+    }
+    .preview-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+      padding: 20px;
+      pointer-events: none;
+    }
+    .subtitle-overlay {
+      position: absolute;
+      bottom: 8%;
+      left: 6%;
+      right: 6%;
+      text-align: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .subtitle-text {
+      display: inline-block;
+      background: rgba(0, 0, 0, 0.8);
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.2);
+      text-shadow: 0 2px 4px #000;
+      line-height: 1.35;
+    }
+    .transport-bar {
+      width: 100%;
+      height: 42px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      margin-top: 10px;
+      flex-shrink: 0;
+    }
+    .timecode {
+      font-family: 'Consolas', monospace;
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* RIGHT PANEL: INSPECTOR */
+    .right-panel {
+      width: 285px;
+      background: var(--bg-panel);
+      border-left: 1px solid var(--border);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .panel-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--accent);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+    }
+    .prop-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+    }
+    .prop-group label { color: var(--muted); font-size: 11px; }
+    .prop-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* BOTTOM TIMELINE PANEL */
+    .timeline-panel {
+      height: 270px;
+      background: var(--bg-panel);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .timeline-toolbar {
+      height: 36px;
+      background: var(--bg-panel-2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-size: 12px;
+    }
+    .timeline-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+    .track-headers {
+      width: 140px;
+      background: var(--bg-panel);
+      border-right: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      z-index: 5;
+    }
+    .ruler-corner {
+      height: 28px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--bg-dark);
+    }
+    .track-header {
+      height: 50px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      font-size: 11px;
+      font-weight: 600;
+      gap: 6px;
+    }
+    .tracks-scroll-area {
+      flex: 1;
+      overflow-x: auto;
+      overflow-y: hidden;
+      position: relative;
+      background: var(--bg-track);
+    }
+    .timeline-canvas {
+      position: relative;
+      min-width: 100%;
+      height: 100%;
+    }
+    .time-ruler {
+      height: 28px;
+      background: #0b0e15;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      cursor: pointer;
+    }
+    .ruler-tick {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      border-left: 1px solid #2b3548;
+      font-size: 10px;
+      color: var(--muted);
+      padding-left: 4px;
+      padding-top: 3px;
+      pointer-events: none;
+    }
+    .track-lane {
+      height: 50px;
+      border-bottom: 1px solid #1a2130;
+      position: relative;
+      background-image: linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 40px 100%;
+    }
+
+    /* CLIPS ON TIMELINE */
+    .timeline-clip {
+      position: absolute;
+      top: 5px;
+      height: 40px;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 11px;
+      color: #fff;
+      cursor: grab;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border: 1.5px solid rgba(255,255,255,0.22);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+    }
+    .timeline-clip:active { cursor: grabbing; }
+    .timeline-clip.selected {
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 2px var(--accent);
+      z-index: 4;
+    }
+    .clip-video { background: linear-gradient(135deg, #0077b6, #023e8a); }
+    .clip-audio { background: linear-gradient(135deg, #009688, #004d40); }
+    .clip-bgm { background: linear-gradient(135deg, #d35400, #78281f); }
+    .clip-sub { background: linear-gradient(135deg, #8e44ad, #4a235a); }
+    .clip-title {
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      pointer-events: none;
+    }
+    .clip-subinfo {
+      font-size: 10px;
+      opacity: 0.8;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .trim-handle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 7px;
+      background: rgba(255,255,255,0.35);
+      cursor: ew-resize;
+      z-index: 6;
+    }
+    .trim-handle:hover { background: var(--accent); }
+    .trim-handle.left { left: 0; border-radius: 5px 0 0 5px; }
+    .trim-handle.right { right: 0; border-radius: 0 5px 5px 0; }
+
+    /* PLAYHEAD */
+    .playhead-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--playhead);
+      z-index: 20;
+      pointer-events: none;
+    }
+    .playhead-head {
+      position: absolute;
+      top: 0;
+      left: -6px;
+      width: 14px;
+      height: 14px;
+      background: var(--playhead);
+      clip-path: polygon(0 0, 100% 0, 100% 55%, 50% 100%, 0 55%);
+    }
+
+    /* RENDER MODAL */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.78);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 580px;
+      max-width: 92vw;
+      padding: 20px;
+      box-shadow: 0 18px 48px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .progress-bar-bg {
+      width: 100%;
+      height: 12px;
+      background: var(--bg-dark);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #00e5ff, #00e676);
+      transition: width 0.25s;
+    }
+    .render-log {
+      background: #06080c;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+      font-family: 'Consolas', monospace;
+      font-size: 11px;
+      color: #a5d6ff;
+      height: 140px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP HEADER: PIPELINE & EXPORT CONTROLS -->
+  <header class="studio-header">
+    <div class="pipeline-steps">
+      <div class="step-pill active" id="step-flow">🎬 1. Videolar (video1..N): <strong id="count-videos">0</strong></div>
+      <span>➔</span>
+      <div class="step-pill" id="step-tts">🎙️ 2. Seslendirme: <strong id="count-audios">0</strong></div>
+      <span>➔</span>
+      <div class="step-pill" id="step-timeline">✂️ 3. Timeline: <strong id="total-duration-pill">0.0s</strong></div>
+    </div>
+
+    <div class="header-actions">
+      <button class="primary" onclick="postToHost({type:'import_from_downloads'})" title="İndirilenler (Downloads) klasöründeki script.md ve video1, video2, video3 dosyalarını otomatik çeker">
+        📥 Downloads'tan (video1..3 + script.md) Çek
+      </button>
+      <button onclick="requestAutoAssemble()" title="İndirilen Flow videolarını ve seslendirme dosyalarını otomatik olarak Timeline'a sıralar">
+        ✨ Timeline'a Diz
+      </button>
+      <select id="export-res" onchange="updateAspectRatio()">
+        <option value="1080x1920">1080x1920 (9:16 Dikey Shorts/Reels)</option>
+        <option value="1920x1080">1920x1080 (16:9 Yatay)</option>
+        <option value="1080x1080">1080x1080 (1:1 Kare)</option>
+      </select>
+      <select id="export-fps">
+        <option value="30">30 FPS</option>
+        <option value="60">60 FPS</option>
+      </select>
+      <label style="font-size:12px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+        <input type="checkbox" id="burn-subtitles" checked /> Altyazı Göm
+      </label>
+      <button class="render-btn" onclick="startFfmpegRender()">🚀 FFmpeg Render Al (.MP4)</button>
+    </div>
+  </header>
+
+  <!-- UPPER 3-COLUMN WORKSPACE -->
+  <div class="upper-workspace">
+    <!-- LEFT PANEL -->
+    <aside class="left-panel">
+      <div class="panel-tabs">
+        <div class="panel-tab active" id="tab-btn-script" onclick="switchLeftTab('script')">📜 script.md & Sahneler</div>
+        <div class="panel-tab" id="tab-btn-media" onclick="switchLeftTab('media')">📁 Medya Havuzu</div>
+        <div class="panel-tab" id="tab-btn-yt" onclick="switchLeftTab('yt')">📺 YouTube & Kapak</div>
+      </div>
+
+      <!-- TAB 1: SCRIPT.MD & AUTOMATION -->
+      <div class="tab-content active" id="tab-script">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
+          <span id="script-title-lbl" style="font-size:12px; font-weight:700; color:var(--accent);">script.md</span>
+          <div style="display:flex; gap:5px;">
+            <button onclick="postToHost({type:'load_script_dialog'})">📂 Seç</button>
+            <button class="primary" onclick="saveScriptMd()">💾 Kaydet</button>
+          </div>
+        </div>
+
+        <div id="script-meta-badges" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+
+        <textarea class="script-textarea" id="script-md-editor" oninput="parseScriptMdLive()"></textarea>
+
+        <div style="background:var(--bg-panel-2); border:1px solid var(--border); border-radius:6px; padding:8px; font-size:11px;">
+          <div style="color:var(--accent); font-weight:700; margin-bottom:3px;">🎙️ Tam Türkçe Seslendirme Metni (Sitenize Gönderilecek Saf Metin):</div>
+          <div id="clean-narration-preview" style="color:#e6edf3; max-height:70px; overflow-y:auto;"></div>
+        </div>
+
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button class="primary" style="flex:1;" onclick="sendScriptToTtsSite()">🔊 Sadece Seslendirme Metnini Siteme Gönder & Seslendir</button>
+        </div>
+
+        <div style="font-size:11px; font-weight:700; color:var(--muted); margin-top:2px;">
+          SAHNE KURGUSU (<span id="scene-count-label">0</span> Klip)
+        </div>
+        <div id="parsed-scenes-container" style="display:flex; flex-direction:column; gap:6px;"></div>
+      </div>
+
+      <!-- TAB 2: MEDIA POOL -->
+      <div class="tab-content" id="tab-media">
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button class="primary" style="flex:1;" onclick="postToHost({type:'import_media_dialog'})">➕ Dosya Ekle</button>
+          <button onclick="postToHost({type:'import_from_downloads'})">📥 Downloads</button>
+          <button onclick="postToHost({type:'open_project_folder'})">📂 Klasör</button>
+        </div>
+
+        <div style="font-size:11px; font-weight:700; color:var(--accent); margin-top:4px;">🎬 FLOW VİDEOLARI (video1, video2, video3...)</div>
+        <div class="media-grid" id="video-media-list"></div>
+
+        <div style="font-size:11px; font-weight:700; color:var(--success); margin-top:8px;">🎙️ SESLENDİRME & SESLER</div>
+        <div class="media-grid" id="audio-media-list"></div>
+      </div>
+
+      <!-- TAB 3: YOUTUBE METADATA & THUMBNAIL -->
+      <div class="tab-content" id="tab-yt">
+        <div style="font-size:12px; font-weight:700; color:var(--accent);">💡 Önerilen Başlık Fikirleri</div>
+        <div id="yt-titles-box" style="font-size:11.5px; color:var(--text); background:var(--bg-panel-2); padding:8px; border-radius:6px; border:1px solid var(--border);"></div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+          <span style="font-size:12px; font-weight:700; color:var(--accent);">📝 YouTube & Sosyal Medya Açıklaması</span>
+          <button onclick="copyTextById('yt-desc-box')">📋 Kopyala</button>
+        </div>
+        <textarea id="yt-desc-box" class="script-textarea" style="height:110px;" readonly></textarea>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+          <span style="font-size:12px; font-weight:700; color:var(--accent);">🖼️ Thumbnail İngilizce Promptu</span>
+          <button onclick="copyTextById('yt-thumb-box')">📋 Kopyala</button>
+        </div>
+        <textarea id="yt-thumb-box" class="script-textarea" style="height:120px;" readonly></textarea>
+      </div>
+    </aside>
+
+    <!-- CENTER PANEL: PREVIEW PLAYER -->
+    <main class="center-panel">
+      <div class="preview-stage-wrapper">
+        <div class="preview-stage portrait" id="preview-stage">
+          <video id="preview-video" playsinline></video>
+          <div class="preview-placeholder" id="preview-placeholder">
+            <div style="font-size:28px; margin-bottom:8px;">🎬</div>
+            <div>Timeline üzerinde oynatılacak klip bekleniyor</div>
+          </div>
+          <div class="subtitle-overlay" id="subtitle-overlay" style="display:none;">
+            <span class="subtitle-text" id="subtitle-overlay-text"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="transport-bar">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button onclick="seekTo(0)" title="Başa Sar">⏮</button>
+          <button onclick="seekRelative(-1)" title="1 Saniye Geri">⏪</button>
+          <button class="primary" id="play-pause-btn" onclick="togglePlay()" style="min-width:95px; justify-content:center;">▶ Oynat</button>
+          <button onclick="seekRelative(1)" title="1 Saniye İleri">⏩</button>
+        </div>
+
+        <div class="timecode" id="timecode-display">00:00.0 / 00:00.0</div>
+
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button onclick="syncVideosToAudio()" title="Video sürelerini seslendirme sürelerine otomatik eşitler">🔗 Video Süresini Sese Eşitle</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- RIGHT PANEL: CLIP INSPECTOR -->
+    <aside class="right-panel">
+      <div class="panel-title">⚙️ Klip Özellikleri (Inspector)</div>
+      <div id="inspector-empty" style="font-size:12px; color:var(--muted);">
+        Düzenlemek, kırpmak veya hızını değiştirmek için aşağıdaki Timeline üzerinden bir Video, Ses veya Altyazı klibine tıklayın.
+      </div>
+
+      <div id="inspector-form" style="display:none; flex-direction:column; gap:10px;">
+        <div class="prop-group">
+          <label>Seçili Klip</label>
+          <input type="text" id="insp-name" readonly />
+        </div>
+
+        <div class="prop-row">
+          <div class="prop-group">
+            <label>Timeline Başlangıç (sn)</label>
+            <input type="number" step="0.1" min="0" id="insp-start" onchange="applyInspectorChanges()" />
+          </div>
+          <div class="prop-group">
+            <label>Klip Süresi (sn)</label>
+            <input type="number" step="0.1" min="0.2" id="insp-duration" onchange="applyInspectorChanges()" />
+          </div>
+        </div>
+
+        <div class="prop-row">
+          <div class="prop-group">
+            <label>İç Kırpma Başlangıç (Trim In)</label>
+            <input type="number" step="0.1" min="0" id="insp-trim-in" onchange="applyInspectorChanges()" />
+          </div>
+          <div class="prop-group">
+            <label>Oynatma Hızı (0.5x - 2.0x)</label>
+            <input type="number" step="0.1" min="0.25" max="3.0" id="insp-speed" onchange="applyInspectorChanges()" />
+          </div>
+        </div>
+
+        <div class="prop-group" id="insp-vol-group">
+          <label>Ses Seviyesi (%): <span id="insp-vol-label">100%</span></label>
+          <input type="range" min="0" max="200" value="100" id="insp-volume" oninput="applyInspectorChanges()" />
+        </div>
+
+        <div class="prop-group" id="insp-sub-group" style="display:none;">
+          <label>Altyazı Metni</label>
+          <textarea id="insp-sub-text" class="script-textarea" style="height:75px;" oninput="applyInspectorChanges()"></textarea>
+        </div>
+
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;">
+          <button onclick="moveSelectedClip(-1)" style="flex:1;">⬅ Sola</button>
+          <button onclick="moveSelectedClip(1)" style="flex:1;">Sağa ➡</button>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button onclick="splitSelectedClipAtPlayhead()" style="flex:1;">✂️ İmleçten Böl</button>
+          <button onclick="deleteSelectedClip()" style="flex:1; border-color:#ff3b5c; color:#ff3b5c;">🗑️ Sil</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- BOTTOM PANEL: CAPCUT MULTI-TRACK TIMELINE -->
+  <section class="timeline-panel">
+    <div class="timeline-toolbar">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button onclick="splitSelectedClipAtPlayhead()">✂️ Klibi Böl (S)</button>
+        <button onclick="deleteSelectedClip()">🗑️ Seçiliyi Sil (Del)</button>
+        <button onclick="packVideoTrackGapless()">🧲 Boşlukları Kapat</button>
+        <button onclick="clearTimeline()">🧹 Timeline'ı Temizle</button>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="color:var(--muted);">Yakınlaştır:</span>
+        <input type="range" id="zoom-slider" min="15" max="140" value="38" oninput="setTimelineZoom(this.value)" style="width:110px;" />
+      </div>
+    </div>
+
+    <div class="timeline-body">
+      <div class="track-headers">
+        <div class="ruler-corner">Zaman Çizelgesi</div>
+        <div class="track-header" style="color:#d2a8ff;">📝 Altyazılar</div>
+        <div class="track-header" style="color:#38bdf8;">🎬 Flow Video</div>
+        <div class="track-header" style="color:#34d399;">🎙️ Seslendirme</div>
+        <div class="track-header" style="color:#fb923c;">🎵 Ek Ses / BGM</div>
+      </div>
+
+      <div class="tracks-scroll-area" id="tracks-scroll-area">
+        <div class="timeline-canvas" id="timeline-canvas">
+          <div class="time-ruler" id="time-ruler" onmousedown="startRulerScrub(event)"></div>
+          <div class="track-lane" id="lane-sub" data-track="sub"></div>
+          <div class="track-lane" id="lane-video" data-track="video"></div>
+          <div class="track-lane" id="lane-audio" data-track="audio"></div>
+          <div class="track-lane" id="lane-bgm" data-track="bgm"></div>
+
+          <!-- Playhead -->
+          <div class="playhead-line" id="playhead" style="left:0px;">
+            <div class="playhead-head"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RENDER PROGRESS MODAL -->
+  <div class="modal-backdrop" id="render-modal">
+    <div class="modal-card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 id="render-modal-title" style="font-size:16px;">🚀 FFmpeg Video Render İşlemi</h3>
+        <button onclick="closeRenderModal()">✖ Kapat</button>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="render-progress-bar"></div>
+      </div>
+      <div id="render-status-text" style="font-size:12px; color:var(--accent);">FFmpeg başlatılıyor...</div>
+      <div class="render-log" id="render-log"></div>
+
+      <div id="render-done-actions" style="display:none; gap:10px; justify-content:flex-end;">
+        <button onclick="postToHost({type:'open_renders_folder'})">📂 Çıktı Klasörünü Aç</button>
+        <button class="primary" onclick="playLastRenderedVideo()">▶ Render Edilen Videoyu Aç</button>
+      </div>
+    </div>
+  </div>
+
+  <audio id="preview-audio-tts"></audio>
+  <audio id="preview-audio-bgm"></audio>
+
+  <script>
+    let pxPerSec = 38;
+    let playheadSec = 0;
+    let isPlaying = false;
+    let lastFrameTime = 0;
+    let selectedClipId = null;
+    let lastRenderedFilePath = '';
+
+    let projectMedia = {
+      videos: [],
+      audios: []
+    };
+
+    let parsedScript = {
+      projectTitle: '',
+      topic: '',
+      totalDurationSec: 30,
+      expectedClips: 3,
+      format: '9:16',
+      narratorTone: '',
+      fullNarration: '',
+      scenes: [],
+      titleIdeas: [],
+      youtubeDescription: '',
+      thumbnailPrompt: ''
+    };
+
+    let timeline = {
+      videoClips: [],
+      audioClips: [],
+      bgmClips: [],
+      subClips: []
+    };
+
+    const videoEl = document.getElementById('preview-video');
+    const ttsAudioEl = document.getElementById('preview-audio-tts');
+    const bgmAudioEl = document.getElementById('preview-audio-bgm');
+    let activeVideoClipId = null;
+    let activeTtsClipId = null;
+    let activeBgmClipId = null;
+
+    function uid(prefix = 'clip') {
+      return prefix + '_' + Math.random().toString(36).substring(2, 9);
+    }
+
+    function postToHost(payload) {
+      if (window.chrome && window.chrome.webview) {
+        window.chrome.webview.postMessage(JSON.stringify(payload));
+      }
+    }
+
+    function switchLeftTab(tab) {
+      ['script', 'media', 'yt'].forEach(t => {
+        document.getElementById('tab-btn-' + t).classList.toggle('active', t === tab);
+        document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+      });
+    }
+
+    function updateAspectRatio() {
+      const res = document.getElementById('export-res').value;
+      const stage = document.getElementById('preview-stage');
+      stage.classList.toggle('portrait', res === '1080x1920');
+    }
+
+    function copyTextById(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.select();
+      document.execCommand('copy');
+    }
+
+    // =========================================================================
+    // EXACT FLOW LABS SCRIPT.MD PARSER
+    // =========================================================================
+    function parseFlowLabsScriptMd(mdText) {
+      const text = mdText || '';
+      const result = {
+        projectTitle: '',
+        topic: '',
+        totalDurationSec: 30,
+        expectedClips: 3,
+        format: '9:16',
+        narratorTone: '',
+        fullNarration: '',
+        scenes: [],
+        titleIdeas: [],
+        youtubeDescription: '',
+        thumbnailPrompt: ''
+      };
+
+      const titleMatch = text.match(/^#\s+(.+)$/m);
+      if (titleMatch) result.projectTitle = titleMatch[1].trim();
+
+      const konuMatch = text.match(/\*\*Konu:\*\*\s*(.+)/i);
+      if (konuMatch) result.topic = konuMatch[1].trim();
+
+      const sureMatch = text.match(/\*\*Toplam Süre:\*\*\s*(\d+)\s*Saniye(?:\s*\((\d+)\s*Klip\))?/i);
+      if (sureMatch) {
+        result.totalDurationSec = parseInt(sureMatch[1], 10) || 30;
+        if (sureMatch[2]) result.expectedClips = parseInt(sureMatch[2], 10) || 3;
+      }
+
+      const formatMatch = text.match(/\*\*Format:\*\*\s*([0-9:]+)/i);
+      if (formatMatch) result.format = formatMatch[1].trim();
+
+      const sections = text.split(/^##\s+/m);
+      for (const sec of sections) {
+        const lines = sec.split(/\r?\n/);
+        const header = (lines[0] || '').trim();
+        const body = lines.slice(1).join('\n').trim();
+
+        if (/Anlatıcı Yönergesi/i.test(header)) {
+          result.narratorTone = body;
+        } else if (/Tam Türkçe Seslendirme Metni/i.test(header)) {
+          result.fullNarration = body;
+        } else if (/Önerilen Başlık/i.test(header)) {
+          result.titleIdeas = body.split(/\r?\n/).map(l => l.replace(/^[-*]\s*/, '').trim()).filter(Boolean);
+        } else if (/YouTube\s*&\s*Sosyal Medya/i.test(header)) {
+          const cm = body.match(/```[a-z]*\s*([\s\S]*?)```/i);
+          result.youtubeDescription = (cm ? cm[1] : body).trim();
+        } else if (/Thumbnail/i.test(header)) {
+          const cm = body.match(/```[a-z]*\s*([\s\S]*?)```/i);
+          result.thumbnailPrompt = (cm ? cm[1] : body).trim();
+        } else if (/Sahne Kurgusu/i.test(header)) {
+          const sceneBlocks = body.split(/^###\s+/m).map(s => s.trim()).filter(Boolean);
+          sceneBlocks.forEach((sb, idx) => {
+            const sLines = sb.split(/\r?\n/);
+            const sHeader = sLines[0] || `Sahne ${idx + 1}`;
+            const sBody = sLines.slice(1).join('\n');
+
+            let startSec = idx * 10;
+            let endSec = (idx + 1) * 10;
+            const tm = sHeader.match(/\((\d+):(\d+)\s*[–\-]\s*(\d+):(\d+)\)/);
+            if (tm) {
+              startSec = parseInt(tm[1], 10) * 60 + parseInt(tm[2], 10);
+              endSec = parseInt(tm[3], 10) * 60 + parseInt(tm[4], 10);
+            }
+
+            const baslikMatch = sBody.match(/\*\*Başlık:\*\*\s*(.+)/i);
+            const ozetMatch = sBody.match(/\*\*Görsel Özet:\*\*\s*(.+)/i);
+            const disSesMatch = sBody.match(/\*\*(?:Türkçe Dış Ses|Seslendirme|Dış Ses):\*\*\s*(.+)/i);
+            const promptCodeMatch = sBody.match(/```[a-z]*\s*([\s\S]*?)```/i);
+            const inlinePromptMatch = sBody.match(/\*\*(?:İngilizce Video Promptu|Prompt):\*\*\s*(.+)/i);
+
+            let narration = disSesMatch ? disSesMatch[1].trim() : '';
+            narration = narration.replace(/^["“”']+|["“”']+$/g, '').trim();
+
+            let prompt = promptCodeMatch ? promptCodeMatch[1].trim() : (inlinePromptMatch ? inlinePromptMatch[1].trim() : '');
+
+            result.scenes.push({
+              index: idx + 1,
+              videoFileName: `video${idx + 1}.mp4`,
+              header: sHeader.trim(),
+              title: baslikMatch ? baslikMatch[1].trim() : sHeader.trim(),
+              visualSummary: ozetMatch ? ozetMatch[1].trim() : '',
+              narration: narration,
+              prompt: prompt,
+              startSec: startSec,
+              endSec: endSec,
+              duration: Math.max(1, endSec - startSec)
+            });
+          });
+        }
+      }
+
+      if (!result.fullNarration && result.scenes.length > 0) {
+        result.fullNarration = result.scenes.map(s => s.narration).filter(Boolean).join(' ');
+      }
+      if (result.scenes.length > 0) {
+        result.expectedClips = result.scenes.length;
+      }
+      return result;
+    }
+
+    function parseScriptMdLive() {
+      const text = document.getElementById('script-md-editor').value;
+      parsedScript = parseFlowLabsScriptMd(text);
+
+      document.getElementById('script-title-lbl').textContent = parsedScript.projectTitle || 'script.md';
+      document.getElementById('scene-count-label').textContent = parsedScript.scenes.length;
+      document.getElementById('clean-narration-preview').textContent = parsedScript.fullNarration || '(Seslendirme metni bulunamadı)';
+
+      // Auto-select 9:16 or 16:9 based on script.md Format field
+      if (parsedScript.format === '9:16') {
+        document.getElementById('export-res').value = '1080x1920';
+        updateAspectRatio();
+      } else if (parsedScript.format === '16:9') {
+        document.getElementById('export-res').value = '1920x1080';
+        updateAspectRatio();
+      }
+
+      // Meta badges
+      document.getElementById('script-meta-badges').innerHTML = `
+        <span class="meta-badge">📐 Format: ${escapeHtml(parsedScript.format)}</span>
+        <span class="meta-badge">⏱️ Süre: ${parsedScript.totalDurationSec}s (${parsedScript.expectedClips} Klip)</span>
+        ${parsedScript.topic ? `<span class="meta-badge">🏷️ ${escapeHtml(parsedScript.topic)}</span>` : ''}
+      `;
+
+      // YouTube tab
+      document.getElementById('yt-titles-box').innerHTML = parsedScript.titleIdeas.map(t => `• ${escapeHtml(t)}`).join('<br/>') || 'Başlık önerisi yok.';
+      document.getElementById('yt-desc-box').value = parsedScript.youtubeDescription || '';
+      document.getElementById('yt-thumb-box').value = parsedScript.thumbnailPrompt || '';
+
+      const container = document.getElementById('parsed-scenes-container');
+      if (parsedScript.scenes.length === 0) {
+        container.innerHTML = '<div style="font-size:11px; color:var(--muted);">Sahne bulunamadı.</div>';
+        return;
+      }
+
+      container.innerHTML = parsedScript.scenes.map((s, idx) => `
+        <div class="parsed-scene-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:var(--accent);">🎬 video${idx + 1}.mp4 — ${escapeHtml(s.title)} (${s.startSec}s–${s.endSec}s)</strong>
+            <button style="padding:2px 7px; font-size:10px;" onclick="sendPromptToFlow(${idx})">Promptu Flow'a Gönder</button>
+          </div>
+          ${s.narration ? `<div style="color:#d2a8ff;"><strong>🎙️ Dış Ses:</strong> "${escapeHtml(s.narration)}"</div>` : ''}
+          ${s.prompt ? `<div style="color:var(--muted); font-size:10px; max-height:42px; overflow:hidden;"><strong>Prompt:</strong> ${escapeHtml(s.prompt)}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function saveScriptMd() {
+      const content = document.getElementById('script-md-editor').value;
+      parseScriptMdLive();
+      postToHost({
+        type: 'save_script_md',
+        content: content,
+        expectedScenes: parsedScript.scenes.length
+      });
+    }
+
+    function sendPromptToFlow(sceneIndex) {
+      const s = parsedScript.scenes[sceneIndex];
+      if (!s) return;
+      postToHost({
+        type: 'send_prompt_to_flow',
+        prompt: s.prompt || s.narration,
+        sceneIndex: sceneIndex + 1
+      });
+    }
+
+    function sendScriptToTtsSite() {
+      saveScriptMd();
+      postToHost({
+        type: 'run_tts_for_script',
+        text: parsedScript.fullNarration,
+        narratorTone: parsedScript.narratorTone,
+        scenes: parsedScript.scenes
+      });
+    }
+
+    // =========================================================================
+    // NATURAL SORT FOR video1.mp4, video2.mp4, video3.mp4
+    // =========================================================================
+    function naturalCompare(a, b) {
+      return String(a || '').localeCompare(String(b || ''), undefined, { numeric: true, sensitivity: 'base' });
+    }
+
+    function renderMediaPool() {
+      projectMedia.videos.sort((a, b) => naturalCompare(a.fileName, b.fileName));
+      projectMedia.audios.sort((a, b) => naturalCompare(a.fileName, b.fileName));
+
+      document.getElementById('count-videos').textContent = `${projectMedia.videos.length}/${parsedScript.expectedClips || 3}`;
+      document.getElementById('count-audios').textContent = projectMedia.audios.length;
+
+      document.getElementById('step-flow').classList.toggle('done', projectMedia.videos.length >= (parsedScript.expectedClips || 1));
+      document.getElementById('step-tts').classList.toggle('done', projectMedia.audios.length > 0);
+
+      const vList = document.getElementById('video-media-list');
+      if (projectMedia.videos.length === 0) {
+        vList.innerHTML = '<div style="font-size:11px; color:var(--muted);">Henüz video yok.</div>';
+      } else {
+        vList.innerHTML = projectMedia.videos.map((v, i) => `
+          <div class="media-card">
+            <div class="media-info">
+              <span class="media-name" title="${escapeHtml(v.fileName)}">🎬 ${escapeHtml(v.fileName)}</span>
+              <span class="media-meta">Sahne ${i + 1} • ${(v.duration || 10).toFixed(1)} sn</span>
+            </div>
+            <button onclick="addMediaToTimeline('video', ${i})">➕ Ekle</button>
+          </div>
+        `).join('');
+      }
+
+      const aList = document.getElementById('audio-media-list');
+      if (projectMedia.audios.length === 0) {
+        aList.innerHTML = '<div style="font-size:11px; color:var(--muted);">Henüz seslendirme dosyası yok.</div>';
+      } else {
+        aList.innerHTML = projectMedia.audios.map((a, i) => `
+          <div class="media-card">
+            <div class="media-info">
+              <span class="media-name" title="${escapeHtml(a.fileName)}">🎙️ ${escapeHtml(a.fileName)}</span>
+              <span class="media-meta">${(a.duration || 10).toFixed(1)} sn</span>
+            </div>
+            <div style="display:flex; gap:4px;">
+              <button onclick="addMediaToTimeline('audio', ${i})">➕ Ses</button>
+              <button onclick="addMediaToTimeline('bgm', ${i})">🎵 BGM</button>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    function addMediaToTimeline(trackType, mediaIdx) {
+      if (trackType === 'video') {
+        const m = projectMedia.videos[mediaIdx];
+        if (!m) return;
+        const start = getTrackEnd(timeline.videoClips);
+        const dur = Math.max(0.5, m.duration || 10.0);
+        timeline.videoClips.push({
+          id: uid('vid'),
+          track: 'video',
+          name: m.fileName,
+          fileName: m.fileName,
+          url: m.url,
+          localPath: m.localPath,
+          start: round1(start),
+          duration: round1(dur),
+          trimIn: 0,
+          sourceDuration: round1(dur),
+          speed: 1.0,
+          volume: 100
+        });
+      } else if (trackType === 'audio') {
+        const m = projectMedia.audios[mediaIdx];
+        if (!m) return;
+        const start = getTrackEnd(timeline.audioClips);
+        const dur = Math.max(0.5, m.duration || 10.0);
+        timeline.audioClips.push({
+          id: uid('aud'),
+          track: 'audio',
+          name: m.fileName,
+          fileName: m.fileName,
+          url: m.url,
+          localPath: m.localPath,
+          start: round1(start),
+          duration: round1(dur),
+          trimIn: 0,
+          sourceDuration: round1(dur),
+          speed: 1.0,
+          volume: 100
+        });
+      } else if (trackType === 'bgm') {
+        const m = projectMedia.audios[mediaIdx];
+        if (!m) return;
+        const start = getTrackEnd(timeline.bgmClips);
+        const dur = Math.max(0.5, m.duration || 10.0);
+        timeline.bgmClips.push({
+          id: uid('bgm'),
+          track: 'bgm',
+          name: m.fileName,
+          fileName: m.fileName,
+          url: m.url,
+          localPath: m.localPath,
+          start: round1(start),
+          duration: round1(dur),
+          trimIn: 0,
+          sourceDuration: round1(dur),
+          speed: 1.0,
+          volume: 30
+        });
+      }
+      renderTimeline();
+      updatePreviewAtPlayhead();
+    }
+
+    function requestAutoAssemble() {
+      projectMedia.videos.sort((a, b) => naturalCompare(a.fileName, b.fileName));
+      projectMedia.audios.sort((a, b) => naturalCompare(a.fileName, b.fileName));
+
+      timeline.videoClips = [];
+      timeline.audioClips = [];
+      timeline.subClips = [];
+
+      let vTime = 0;
+      projectMedia.videos.forEach((v, idx) => {
+        const scene = parsedScript.scenes[idx];
+        const dur = round1(Math.max(0.5, v.duration || (scene ? scene.duration : 10.0)));
+        timeline.videoClips.push({
+          id: uid('vid'),
+          track: 'video',
+          name: scene ? `${v.fileName} (${scene.title})` : v.fileName,
+          fileName: v.fileName,
+          url: v.url,
+          localPath: v.localPath,
+          start: round1(vTime),
+          duration: dur,
+          trimIn: 0,
+          sourceDuration: dur,
+          speed: 1.0,
+          volume: 100
+        });
+        vTime += dur;
+      });
+
+      let aTime = 0;
+      projectMedia.audios.forEach((a) => {
+        const dur = round1(Math.max(0.5, a.duration || 10.0));
+        timeline.audioClips.push({
+          id: uid('aud'),
+          track: 'audio',
+          name: a.fileName,
+          fileName: a.fileName,
+          url: a.url,
+          localPath: a.localPath,
+          start: round1(aTime),
+          duration: dur,
+          trimIn: 0,
+          sourceDuration: dur,
+          speed: 1.0,
+          volume: 100
+        });
+        aTime += dur;
+      });
+
+      // Align each scene's "Türkçe Dış Ses" subtitle to video1, video2, video3
+      let sTime = 0;
+      parsedScript.scenes.forEach((s, idx) => {
+        if (!s.narration) return;
+        const refClip = timeline.videoClips[idx] || timeline.audioClips[idx];
+        const start = refClip ? refClip.start : (s.startSec !== undefined ? s.startSec : sTime);
+        const dur = refClip ? refClip.duration : (s.duration || 10.0);
+        timeline.subClips.push({
+          id: uid('sub'),
+          track: 'sub',
+          name: s.title || `Sahne ${idx + 1}`,
+          text: s.narration,
+          start: round1(start),
+          duration: round1(dur)
+        });
+        sTime = start + dur;
+      });
+
+      playheadSec = 0;
+      renderTimeline();
+      updatePreviewAtPlayhead(true);
+    }
+
+    function syncVideosToAudio() {
+      if (timeline.videoClips.length === 0 || timeline.audioClips.length === 0) return;
+
+      if (timeline.audioClips.length === 1 && timeline.videoClips.length > 1) {
+        const totalAudioDur = timeline.audioClips[0].duration;
+        const perClipDur = round1(totalAudioDur / timeline.videoClips.length);
+        let cur = 0;
+        timeline.videoClips.forEach((vc, idx) => {
+          const factor = vc.sourceDuration / perClipDur;
+          vc.speed = round2(Math.min(2.5, Math.max(0.4, factor)));
+          vc.start = round1(cur);
+          vc.duration = perClipDur;
+          if (timeline.subClips[idx]) {
+            timeline.subClips[idx].start = vc.start;
+            timeline.subClips[idx].duration = vc.duration;
+          }
+          cur += perClipDur;
+        });
+      } else {
+        let cur = 0;
+        timeline.videoClips.forEach((vc, idx) => {
+          const ac = timeline.audioClips[idx];
+          if (ac) {
+            ac.start = round1(cur);
+            const targetDur = ac.duration;
+            const factor = vc.sourceDuration / targetDur;
+            vc.speed = round2(Math.min(2.5, Math.max(0.4, factor)));
+            vc.start = round1(cur);
+            vc.duration = round1(targetDur);
+            if (timeline.subClips[idx]) {
+              timeline.subClips[idx].start = round1(cur);
+              timeline.subClips[idx].duration = round1(targetDur);
+            }
+            cur += targetDur;
+          } else {
+            vc.start = round1(cur);
+            cur += vc.duration;
+          }
+        });
+      }
+      renderTimeline();
+      updateInspector();
+      updatePreviewAtPlayhead(true);
+    }
+
+    // =========================================================================
+    // TIMELINE RENDERING & DRAG / TRIM INTERACTION
+    // =========================================================================
+    function getTotalDuration() {
+      const ends = [
+        ...timeline.videoClips.map(c => c.start + c.duration),
+        ...timeline.audioClips.map(c => c.start + c.duration),
+        ...timeline.bgmClips.map(c => c.start + c.duration),
+        ...timeline.subClips.map(c => c.start + c.duration)
+      ];
+      return Math.max(0, ...ends);
+    }
+
+    function getTrackEnd(arr) {
+      if (!arr || arr.length === 0) return 0;
+      return Math.max(...arr.map(c => c.start + c.duration));
+    }
+
+    function setTimelineZoom(val) {
+      pxPerSec = Number(val) || 38;
+      renderTimeline();
+    }
+
+    function renderTimeline() {
+      const totalDur = getTotalDuration();
+      document.getElementById('total-duration-pill').textContent = totalDur.toFixed(1) + 's';
+      document.getElementById('step-timeline').classList.toggle('done', totalDur > 0);
+
+      const canvasWidth = Math.max(1200, Math.ceil((totalDur + 15) * pxPerSec));
+      const canvas = document.getElementById('timeline-canvas');
+      canvas.style.width = canvasWidth + 'px';
+
+      const ruler = document.getElementById('time-ruler');
+      let rulerHtml = '';
+      const stepSec = pxPerSec >= 70 ? 1 : (pxPerSec >= 35 ? 2 : 5);
+      const maxSec = Math.ceil(canvasWidth / pxPerSec);
+      for (let s = 0; s <= maxSec; s += stepSec) {
+        rulerHtml += `<div class="ruler-tick" style="left:${s * pxPerSec}px;">${formatTimeShort(s)}</div>`;
+      }
+      ruler.innerHTML = rulerHtml;
+
+      renderLane('lane-sub', timeline.subClips, 'clip-sub');
+      renderLane('lane-video', timeline.videoClips, 'clip-video');
+      renderLane('lane-audio', timeline.audioClips, 'clip-audio');
+      renderLane('lane-bgm', timeline.bgmClips, 'clip-bgm');
+
+      updatePlayheadPosition();
+      updateTimecodeDisplay();
+    }
+
+    function renderLane(laneId, clips, cssClass) {
+      const lane = document.getElementById(laneId);
+      lane.innerHTML = clips.map(clip => {
+        const left = Math.round(clip.start * pxPerSec);
+        const width = Math.max(24, Math.round(clip.duration * pxPerSec));
+        const isSel = clip.id === selectedClipId ? 'selected' : '';
+        const label = clip.track === 'sub' ? clip.text : clip.name;
+        const meta = clip.track === 'sub'
+          ? `${clip.duration.toFixed(1)}s`
+          : `${clip.duration.toFixed(1)}s • ${(clip.speed || 1).toFixed(1)}x`;
+
+        return `
+          <div class="timeline-clip ${cssClass} ${isSel}"
+               style="left:${left}px; width:${width}px;"
+               onmousedown="startClipDrag(event, '${clip.id}')">
+            <div class="trim-handle left" onmousedown="startClipTrim(event, '${clip.id}', 'left')"></div>
+            <div class="clip-title">${escapeHtml(label)}</div>
+            <div class="clip-subinfo">${meta}</div>
+            <div class="trim-handle right" onmousedown="startClipTrim(event, '${clip.id}', 'right')"></div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function findClipById(id) {
+      return [...timeline.videoClips, ...timeline.audioClips, ...timeline.bgmClips, ...timeline.subClips]
+        .find(c => c.id === id);
+    }
+
+    function getTrackArray(trackName) {
+      if (trackName === 'video') return timeline.videoClips;
+      if (trackName === 'audio') return timeline.audioClips;
+      if (trackName === 'bgm') return timeline.bgmClips;
+      if (trackName === 'sub') return timeline.subClips;
+      return [];
+    }
+
+    function selectClip(id) {
+      selectedClipId = id;
+      renderTimeline();
+      updateInspector();
+    }
+
+    function startClipDrag(e, clipId) {
+      if (e.target.classList.contains('trim-handle')) return;
+      e.stopPropagation();
+      selectClip(clipId);
+      const clip = findClipById(clipId);
+      if (!clip) return;
+
+      const startX = e.clientX;
+      const origStart = clip.start;
+
+      function onMove(ev) {
+        const dx = ev.clientX - startX;
+        const dSec = dx / pxPerSec;
+        clip.start = round1(Math.max(0, origStart + dSec));
+        renderTimeline();
+        updateInspector();
+      }
+      function onUp() {
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+        updatePreviewAtPlayhead(true);
+      }
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+    }
+
+    function startClipTrim(e, clipId, side) {
+      e.stopPropagation();
+      selectClip(clipId);
+      const clip = findClipById(clipId);
+      if (!clip) return;
+
+      const startX = e.clientX;
+      const origStart = clip.start;
+      const origDur = clip.duration;
+      const origTrimIn = clip.trimIn || 0;
+
+      function onMove(ev) {
+        const dx = ev.clientX - startX;
+        const dSec = dx / pxPerSec;
+        if (side === 'left') {
+          const delta = Math.min(origDur - 0.3, Math.max(-origStart, dSec));
+          clip.start = round1(origStart + delta);
+          clip.duration = round1(origDur - delta);
+          if (clip.track !== 'sub') {
+            clip.trimIn = round1(Math.max(0, origTrimIn + delta));
+          }
+        } else {
+          clip.duration = round1(Math.max(0.3, origDur + dSec));
+        }
+        renderTimeline();
+        updateInspector();
+      }
+      function onUp() {
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+        updatePreviewAtPlayhead(true);
+      }
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+    }
+
+    function startRulerScrub(e) {
+      const ruler = document.getElementById('time-ruler');
+      function updateFromEvent(ev) {
+        const rect = ruler.getBoundingClientRect();
+        const x = Math.max(0, ev.clientX - rect.left);
+        playheadSec = round2(x / pxPerSec);
+        updatePlayheadPosition();
+        updateTimecodeDisplay();
+        updatePreviewAtPlayhead(true);
+      }
+      updateFromEvent(e);
+      function onMove(ev) { updateFromEvent(ev); }
+      function onUp() {
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+      }
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup', onUp);
+    }
+
+    // =========================================================================
+    // INSPECTOR & CLIP EDITING TOOLS
+    // =========================================================================
+    function updateInspector() {
+      const clip = findClipById(selectedClipId);
+      const emptyEl = document.getElementById('inspector-empty');
+      const formEl = document.getElementById('inspector-form');
+
+      if (!clip) {
+        emptyEl.style.display = 'block';
+        formEl.style.display = 'none';
+        return;
+      }
+      emptyEl.style.display = 'none';
+      formEl.style.display = 'flex';
+
+      document.getElementById('insp-name').value = clip.track === 'sub' ? `Altyazı (${clip.name})` : clip.name;
+      document.getElementById('insp-start').value = clip.start;
+      document.getElementById('insp-duration').value = clip.duration;
+      document.getElementById('insp-trim-in').value = clip.trimIn || 0;
+      document.getElementById('insp-speed').value = clip.speed || 1.0;
+      document.getElementById('insp-volume').value = clip.volume !== undefined ? clip.volume : 100;
+      document.getElementById('insp-vol-label').textContent = (clip.volume !== undefined ? clip.volume : 100) + '%';
+
+      const isSub = clip.track === 'sub';
+      document.getElementById('insp-vol-group').style.display = isSub ? 'none' : 'flex';
+      document.getElementById('insp-sub-group').style.display = isSub ? 'flex' : 'none';
+      if (isSub) {
+        document.getElementById('insp-sub-text').value = clip.text || '';
+      }
+    }
+
+    function applyInspectorChanges() {
+      const clip = findClipById(selectedClipId);
+      if (!clip) return;
+      clip.start = round1(Math.max(0, parseFloat(document.getElementById('insp-start').value) || 0));
+      clip.duration = round1(Math.max(0.2, parseFloat(document.getElementById('insp-duration').value) || 1));
+      if (clip.track !== 'sub') {
+        clip.trimIn = round1(Math.max(0, parseFloat(document.getElementById('insp-trim-in').value) || 0));
+        clip.speed = round2(Math.min(3.0, Math.max(0.25, parseFloat(document.getElementById('insp-speed').value) || 1)));
+        clip.volume = parseInt(document.getElementById('insp-volume').value, 10) || 0;
+        document.getElementById('insp-vol-label').textContent = clip.volume + '%';
+      } else {
+        clip.text = document.getElementById('insp-sub-text').value;
+      }
+      renderTimeline();
+      updatePreviewAtPlayhead(true);
+    }
+
+    function splitSelectedClipAtPlayhead() {
+      const clip = findClipById(selectedClipId);
+      if (!clip) return;
+      if (playheadSec <= clip.start + 0.2 || playheadSec >= clip.start + clip.duration - 0.2) {
+        alert('Klibi bölmek için kırmızı zaman imlecini (Playhead) seçili klibin iç kısmına getirin.');
+        return;
+      }
+      const firstDur = round1(playheadSec - clip.start);
+      const secondDur = round1(clip.duration - firstDur);
+      clip.duration = firstDur;
+
+      const clone = JSON.parse(JSON.stringify(clip));
+      clone.id = uid(clip.track);
+      clone.start = round1(playheadSec);
+      clone.duration = secondDur;
+      if (clone.track !== 'sub') {
+        clone.trimIn = round1((clip.trimIn || 0) + firstDur * (clip.speed || 1));
+      }
+
+      const arr = getTrackArray(clip.track);
+      arr.push(clone);
+      arr.sort((a, b) => a.start - b.start);
+      selectClip(clone.id);
+    }
+
+    function deleteSelectedClip() {
+      if (!selectedClipId) return;
+      ['videoClips', 'audioClips', 'bgmClips', 'subClips'].forEach(k => {
+        timeline[k] = timeline[k].filter(c => c.id !== selectedClipId);
+      });
+      selectedClipId = null;
+      renderTimeline();
+      updateInspector();
+      updatePreviewAtPlayhead(true);
+    }
+
+    function moveSelectedClip(dir) {
+      const clip = findClipById(selectedClipId);
+      if (!clip) return;
+      clip.start = round1(Math.max(0, clip.start + dir * 0.5));
+      renderTimeline();
+      updateInspector();
+      updatePreviewAtPlayhead(true);
+    }
+
+    function packVideoTrackGapless() {
+      timeline.videoClips.sort((a, b) => a.start - b.start);
+      let cur = 0;
+      timeline.videoClips.forEach(c => {
+        c.start = round1(cur);
+        cur += c.duration;
+      });
+      renderTimeline();
+      updatePreviewAtPlayhead(true);
+    }
+
+    function clearTimeline() {
+      timeline.videoClips = [];
+      timeline.audioClips = [];
+      timeline.bgmClips = [];
+      timeline.subClips = [];
+      selectedClipId = null;
+      playheadSec = 0;
+      pausePlayback();
+      renderTimeline();
+      updateInspector();
+      updatePreviewAtPlayhead(true);
+    }
+
+    // =========================================================================
+    // REAL-TIME MULTI-TRACK PREVIEW ENGINE
+    // =========================================================================
+    function togglePlay() {
+      if (isPlaying) {
+        pausePlayback();
+      } else {
+        const total = getTotalDuration();
+        if (total <= 0) return;
+        if (playheadSec >= total) playheadSec = 0;
+        isPlaying = true;
+        lastFrameTime = performance.now();
+        document.getElementById('play-pause-btn').textContent = '⏸ Duraklat';
+        updatePreviewAtPlayhead(true);
+        requestAnimationFrame(playbackLoop);
+      }
+    }
+
+    function pausePlayback() {
+      isPlaying = false;
+      document.getElementById('play-pause-btn').textContent = '▶ Oynat';
+      videoEl.pause();
+      ttsAudioEl.pause();
+      bgmAudioEl.pause();
+    }
+
+    function seekTo(sec) {
+      playheadSec = round2(Math.max(0, sec));
+      updatePlayheadPosition();
+      updateTimecodeDisplay();
+      updatePreviewAtPlayhead(true);
+    }
+
+    function seekRelative(delta) {
+      seekTo(playheadSec + delta);
+    }
+
+    function playbackLoop(now) {
+      if (!isPlaying) return;
+      const dt = (now - lastFrameTime) / 1000;
+      lastFrameTime = now;
+      playheadSec += dt;
+
+      const total = getTotalDuration();
+      if (playheadSec >= total) {
+        playheadSec = total;
+        updatePlayheadPosition();
+        updateTimecodeDisplay();
+        pausePlayback();
+        return;
+      }
+
+      updatePlayheadPosition();
+      updateTimecodeDisplay();
+      updatePreviewAtPlayhead(false);
+      requestAnimationFrame(playbackLoop);
+    }
+
+    function updatePlayheadPosition() {
+      const ph = document.getElementById('playhead');
+      ph.style.left = Math.round(playheadSec * pxPerSec) + 'px';
+    }
+
+    function updateTimecodeDisplay() {
+      const total = getTotalDuration();
+      document.getElementById('timecode-display').textContent =
+        `${formatTimecode(playheadSec)} / ${formatTimecode(total)}`;
+    }
+
+    function updatePreviewAtPlayhead(forceSeek) {
+      const activeSub = timeline.subClips.find(s => playheadSec >= s.start && playheadSec < s.start + s.duration);
+      const subOverlay = document.getElementById('subtitle-overlay');
+      if (activeSub && activeSub.text) {
+        subOverlay.style.display = 'block';
+        document.getElementById('subtitle-overlay-text').textContent = activeSub.text;
+      } else {
+        subOverlay.style.display = 'none';
+      }
+
+      const activeVid = timeline.videoClips.find(v => playheadSec >= v.start && playheadSec < v.start + v.duration);
+      const placeholder = document.getElementById('preview-placeholder');
+      if (activeVid && activeVid.url) {
+        placeholder.style.display = 'none';
+        const targetMediaTime = (activeVid.trimIn || 0) + (playheadSec - activeVid.start) * (activeVid.speed || 1);
+        if (activeVideoClipId !== activeVid.id || videoEl.getAttribute('data-url') !== activeVid.url) {
+          activeVideoClipId = activeVid.id;
+          videoEl.setAttribute('data-url', activeVid.url);
+          videoEl.src = activeVid.url;
+          videoEl.currentTime = targetMediaTime;
+        } else if (forceSeek || Math.abs(videoEl.currentTime - targetMediaTime) > 0.35) {
+          try { videoEl.currentTime = targetMediaTime; } catch (e) {}
+        }
+        videoEl.playbackRate = activeVid.speed || 1.0;
+        videoEl.volume = Math.min(1, Math.max(0, (activeVid.volume !== undefined ? activeVid.volume : 100) / 100));
+        if (isPlaying && videoEl.paused) {
+          videoEl.play().catch(() => {});
+        } else if (!isPlaying && !videoEl.paused) {
+          videoEl.pause();
+        }
+      } else {
+        activeVideoClipId = null;
+        videoEl.pause();
+        if (timeline.videoClips.length === 0) {
+          placeholder.style.display = 'flex';
+        }
+      }
+
+      syncAudioElement(ttsAudioEl, timeline.audioClips, 'tts', forceSeek);
+      syncAudioElement(bgmAudioEl, timeline.bgmClips, 'bgm', forceSeek);
+    }
+
+    function syncAudioElement(audioElem, clipsArray, kind, forceSeek) {
+      const activeClip = clipsArray.find(a => playheadSec >= a.start && playheadSec < a.start + a.duration);
+      const currentId = kind === 'tts' ? activeTtsClipId : activeBgmClipId;
+      if (activeClip && activeClip.url) {
+        const targetTime = (activeClip.trimIn || 0) + (playheadSec - activeClip.start) * (activeClip.speed || 1);
+        if (currentId !== activeClip.id || audioElem.getAttribute('data-url') !== activeClip.url) {
+          if (kind === 'tts') activeTtsClipId = activeClip.id; else activeBgmClipId = activeClip.id;
+          audioElem.setAttribute('data-url', activeClip.url);
+          audioElem.src = activeClip.url;
+          audioElem.currentTime = targetTime;
+        } else if (forceSeek || Math.abs(audioElem.currentTime - targetTime) > 0.35) {
+          try { audioElem.currentTime = targetTime; } catch (e) {}
+        }
+        audioElem.playbackRate = activeClip.speed || 1.0;
+        audioElem.volume = Math.min(1, Math.max(0, (activeClip.volume !== undefined ? activeClip.volume : 100) / 100));
+        if (isPlaying && audioElem.paused) {
+          audioElem.play().catch(() => {});
+        } else if (!isPlaying && !audioElem.paused) {
+          audioElem.pause();
+        }
+      } else {
+        if (kind === 'tts') activeTtsClipId = null; else activeBgmClipId = null;
+        if (!audioElem.paused) audioElem.pause();
+      }
+    }
+
+    // =========================================================================
+    // FFMPEG RENDER PIPELINE
+    // =========================================================================
+    function startFfmpegRender() {
+      pausePlayback();
+      if (timeline.videoClips.length === 0) {
+        alert('Render almak için Timeline üzerinde en az 1 video klibi bulunmalıdır.');
+        return;
+      }
+      document.getElementById('render-modal').classList.add('open');
+      document.getElementById('render-progress-bar').style.width = '8%';
+      document.getElementById('render-status-text').textContent = 'Timeline verisi FFmpeg motoruna gönderiliyor...';
+      document.getElementById('render-log').textContent = '';
+      document.getElementById('render-done-actions').style.display = 'none';
+
+      const payload = {
+        type: 'start_ffmpeg_render',
+        resolution: document.getElementById('export-res').value,
+        fps: parseInt(document.getElementById('export-fps').value, 10) || 30,
+        burnSubtitles: document.getElementById('burn-subtitles').checked,
+        totalDuration: getTotalDuration(),
+        timeline: timeline
+      };
+      postToHost(payload);
+    }
+
+    function closeRenderModal() {
+      document.getElementById('render-modal').classList.remove('open');
+    }
+
+    function playLastRenderedVideo() {
+      if (lastRenderedFilePath) {
+        postToHost({ type: 'open_rendered_file', path: lastRenderedFilePath });
+      }
+    }
+
+    // =========================================================================
+    // HOST C# <-> EDITOR BRIDGE CALLBACKS
+    // =========================================================================
+    window.onHostProjectState = function(state) {
+      if (state.scriptMd !== undefined) {
+        document.getElementById('script-md-editor').value = state.scriptMd;
+        parseScriptMdLive();
+      }
+      if (state.videos) projectMedia.videos = state.videos;
+      if (state.audios) projectMedia.audios = state.audios;
+      renderMediaPool();
+
+      if (state.autoAssemble || (timeline.videoClips.length === 0 && (projectMedia.videos.length > 0 || projectMedia.audios.length > 0))) {
+        requestAutoAssemble();
+      }
+    };
+
+    window.onHostNewMediaCaptured = function(item) {
+      if (item.mediaType === 'video') {
+        const exists = projectMedia.videos.some(v => v.fileName === item.fileName);
+        if (!exists) projectMedia.videos.push(item);
+      } else if (item.mediaType === 'audio') {
+        const exists = projectMedia.audios.some(a => a.fileName === item.fileName);
+        if (!exists) projectMedia.audios.push(item);
+      }
+      renderMediaPool();
+      requestAutoAssemble();
+    };
+
+    window.onHostRenderProgress = function(data) {
+      if (data.percent !== undefined) {
+        document.getElementById('render-progress-bar').style.width = Math.min(100, Math.max(5, data.percent)) + '%';
+      }
+      if (data.status) {
+        document.getElementById('render-status-text').textContent = data.status;
+      }
+      if (data.logLine) {
+        const logEl = document.getElementById('render-log');
+        logEl.textContent += data.logLine + '\n';
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+      if (data.completed) {
+        document.getElementById('render-progress-bar').style.width = '100%';
+        lastRenderedFilePath = data.outputPath || '';
+        document.getElementById('render-done-actions').style.display = 'flex';
+      }
+    };
+
+    window.addEventListener('keydown', (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        togglePlay();
+      } else if (e.code === 'Delete' || e.code === 'Backspace') {
+        deleteSelectedClip();
+      } else if (e.key === 's' || e.key === 'S') {
+        splitSelectedClipAtPlayhead();
+      }
+    });
+
+    function round1(n) { return Math.round(n * 10) / 10; }
+    function round2(n) { return Math.round(n * 100) / 100; }
+    function formatTimeShort(sec) {
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+    function formatTimecode(sec) {
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = (sec % 60).toFixed(1).padStart(4, '0');
+      return `${m}:${s}`;
+    }
+    function escapeHtml(str) {
+      return String(str || '').replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderTimeline();
+      postToHost({ type: 'editor_ready' });
+    });
+  </script>
+</body>
+</html>

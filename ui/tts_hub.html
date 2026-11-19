@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seslendirme Sitesi & Otomasyon Köprüsü</title>
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --panel: #131822;
+      --panel-2: #1a2130;
+      --border: #283246;
+      --accent: #00e5ff;
+      --accent-2: #7c4dff;
+      --success: #00e676;
+      --text: #e6edf3;
+      --muted: #8b949e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 24px;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 20px;
+    }
+    .full-width { grid-column: 1 / -1; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    }
+    h1 { font-size: 20px; font-weight: 700; margin-bottom: 6px; color: #fff; display: flex; align-items: center; gap: 10px; }
+    h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: var(--accent); }
+    p { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+    .url-bar {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    input[type="text"], textarea, select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+    }
+    input[type="text"]:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+    }
+    textarea {
+      min-height: 180px;
+      resize: vertical;
+      font-family: 'Consolas', monospace;
+    }
+    button {
+      background: linear-gradient(135deg, #00b4d8, #7c4dff);
+      color: #fff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    button:hover { opacity: 0.92; }
+    button:active { transform: scale(0.98); }
+    button.secondary {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    button.success {
+      background: linear-gradient(135deg, #00c853, #009624);
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(0, 229, 255, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(0, 229, 255, 0.3);
+    }
+    .code-box {
+      background: #07090d;
+      border: 1px solid #1f2735;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+      color: #a5d6ff;
+      overflow-x: auto;
+      white-space: pre;
+      margin-top: 8px;
+    }
+    .row { display: flex; gap: 10px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+    .scene-list {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .scene-item {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .scene-item span { flex: 1; }
+    .log-box {
+      margin-top: 12px;
+      padding: 10px;
+      background: #080a0f;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--success);
+      font-family: 'Consolas', monospace;
+      min-height: 46px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Top Banner: Connect User's Own TTS Website -->
+    <div class="card full-width">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div>
+          <h1>🎙️ Kendi Seslendirme Sitenizi (TTS) Buraya Gömün</h1>
+          <p style="margin-bottom:0;">Kendi seslendirme sitenizin adresini aşağıya (veya üstteki adres çubuğuna) yazıp kaydedin. Otomasyon sırasında <code>script.md</code> metni doğrudan sitenize gönderilir ve üretilen ses dosyası otomatik yakalanıp CapCut Timeline'ına aktarılır.</p>
+        </div>
+        <span class="status-badge" id="bridge-status">● Otomasyon Köprüsü Aktif</span>
+      </div>
+      <div class="url-bar">
+        <input type="text" id="custom-tts-url" placeholder="Örn: https://seslendirmesitem.com veya http://localhost:3000" />
+        <button onclick="connectCustomSite()">🌐 Sitemi Bu Sekmeye Göm & Kaydet</button>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div style="flex:1; min-width:220px;">
+          <label style="font-size:11px; color:var(--muted);">Sitenizdeki Metin Kutusu CSS Seçicisi (Otomatik Doldurma İçin):</label>
+          <input type="text" id="input-selector" value="textarea, #script-input, [contenteditable='true'], input[type='text']" />
+        </div>
+        <div style="flex:1; min-width:220px;">
+          <label style="font-size:11px; color:var(--muted);">Sitenizdeki "Seslendir" Butonu CSS Seçicisi:</label>
+          <input type="text" id="btn-selector" value="#generate-btn, button[type='submit'], .generate-btn, .tts-btn" />
+        </div>
+        <button class="secondary" style="margin-top:16px;" onclick="saveSelectors()">💾 Seçicileri Kaydet</button>
+      </div>
+    </div>
+
+    <!-- Left Card: Built-in Studio & Tester for script.md -->
+    <div class="card">
+      <h2>📜 script.md Otomatik Seslendirme Alanı</h2>
+      <p>Flow videoları tamamlandığında <code>script.md</code> içindeki seslendirme metinleri otomatik olarak buraya (veya bağladığınız kendi sitenize) aktarılır.</p>
+      
+      <textarea id="script-input" placeholder="script.md içeriği buraya gelecek..."></textarea>
+
+      <div class="row">
+        <select id="voice-mode" style="flex:1;">
+          <option value="sapi_tr">Yerleşik Windows TTS Motoru (Gerçek WAV Ses Üretimi)</option>
+          <option value="scenes_separate">Her Sahneyi Ayrı Ses Dosyası Olarak Üret (sahne_01.wav, sahne_02.wav...)</option>
+          <option value="single_full">Tüm Metni Tek Ses Dosyası Olarak Üret (seslendirme_tam.wav)</option>
+        </select>
+        <button id="generate-btn" class="success" onclick="triggerVoiceover()">🔊 Şimdi Seslendir & Timeline'a Gönder</button>
+      </div>
+
+      <div id="audio-preview-area" style="margin-top:14px; display:none;">
+        <label style="font-size:12px; color:var(--accent);">Son Üretilen Ses Önizlemesi:</label>
+        <audio id="generated-audio" controls style="width:100%; margin-top:6px; height:36px;"></audio>
+      </div>
+
+      <div class="log-box" id="tts-log">Hazır. Flow videoları bittiğinde veya "script.md Gönder" butonuna bastığınızda seslendirme otomatik başlar.</div>
+    </div>
+
+    <!-- Right Card: Scenes & Integration Guide -->
+    <div class="card">
+      <h2>🔗 Kendi Siteniz İçin Tam Otomasyon Kancası (İsteğe Bağlı)</h2>
+      <p>Sitenizde hiçbir kod değiştirmeseniz bile uygulama metin kutusunu bulup doldurur ve indirilen/çalınan <code>.mp3/.wav</code> seslerini otomatik yakalar. Ancak <strong>%100 doğrudan bağlantı</strong> isterseniz sitenize şu 5 satırı ekleyebilirsiniz:</p>
+      
+      <div class="code-box">// 1. Masaüstü uygulamasından script.md metnini alma:
+window.startVoiceover = async function(fullText, scenes) {
+  console.log("Gelen script.md:", fullText, scenes);
+  // Kendi ses üretim fonksiyonunuzu çağırın:
+  const audioUrl = await kendiTtsFonksiyonunuz(fullText);
+
+  // 2. Üretilen sesi doğrudan CapCut Timeline'ına gönderme:
+  const a = document.createElement('a');
+  a.href = audioUrl;
+  a.download = 'seslendirme.mp3';
+  a.click();
+};</div>
+
+      <h2 style="margin-top:16px;">🎬 Algılanan Sahneler (script.md)</h2>
+      <div class="scene-list" id="scene-list">
+        <div class="scene-item"><span>Henüz script.md yüklenmedi.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentScenes = [];
+
+    function logMsg(msg) {
+      const el = document.getElementById('tts-log');
+      const time = new Date().toLocaleTimeString('tr-TR');
+      el.textContent = `[${time}] ${msg}`;
+    }
+
+    function postToHost(payload) {
+      if (window.chrome && window.chrome.webview) {
+        window.chrome.webview.postMessage(JSON.stringify(payload));
+      }
+    }
+
+    function connectCustomSite() {
+      const url = document.getElementById('custom-tts-url').value.trim();
+      if (!url) {
+        alert('Lütfen seslendirme sitenizin URL adresini girin.');
+        return;
+      }
+      postToHost({
+        type: 'set_custom_tts_url',
+        url: url,
+        inputSelector: document.getElementById('input-selector').value.trim(),
+        buttonSelector: document.getElementById('btn-selector').value.trim()
+      });
+    }
+
+    function saveSelectors() {
+      postToHost({
+        type: 'save_tts_selectors',
+        inputSelector: document.getElementById('input-selector').value.trim(),
+        buttonSelector: document.getElementById('btn-selector').value.trim()
+      });
+      logMsg('CSS seçicileri kaydedildi.');
+    }
+
+    // Hook called automatically by FlowVideoStudio C# Orchestrator when Flow videos finish!
+    window.startVoiceover = function(fullText, scenes, autoExecute = true) {
+      document.getElementById('script-input').value = fullText || '';
+      currentScenes = Array.isArray(scenes) ? scenes : [];
+      renderScenes();
+      logMsg(`script.md alındı (${currentScenes.length || 1} sahne). Seslendirme başlatılıyor...`);
+      if (autoExecute) {
+        triggerVoiceover();
+      }
+    };
+
+    window.addEventListener('message', (e) => {
+      if (e.data && e.data.type === 'FLOW_STUDIO_SCRIPT') {
+        window.startVoiceover(e.data.text, e.data.scenes, e.data.autoExecute !== false);
+      }
+    });
+
+    function renderScenes() {
+      const list = document.getElementById('scene-list');
+      if (!currentScenes || currentScenes.length === 0) {
+        list.innerHTML = '<div class="scene-item"><span>Metin kutusundaki içerik seslendirilecek.</span></div>';
+        return;
+      }
+      list.innerHTML = currentScenes.map((s, idx) => `
+        <div class="scene-item">
+          <strong style="color:var(--accent);">#${idx + 1}</strong>
+          <span>${(s.narration || s.text || '').substring(0, 95)}</span>
+        </div>
+      `).join('');
+    }
+
+    function triggerVoiceover() {
+      const text = document.getElementById('script-input').value.trim();
+      if (!text) {
+        logMsg('Hata: Seslendirilecek metin boş!');
+        return;
+      }
+      const mode = document.getElementById('voice-mode').value;
+      logMsg('Ses dosyaları üretiliyor ve CapCut Timeline\'ına aktarılıyor...');
+      postToHost({
+        type: 'synthesize_local_tts',
+        text: text,
+        mode: mode,
+        scenes: currentScenes
+      });
+    }
+
+    window.onLocalTtsCompleted = function(audioUrl, fileName) {
+      logMsg(`✅ Ses üretildi (${fileName}) ve CapCut Timeline'ına aktarıldı!`);
+      const area = document.getElementById('audio-preview-area');
+      const player = document.getElementById('generated-audio');
+      if (audioUrl) {
+        area.style.display = 'block';
+        player.src = audioUrl + '?t=' + Date.now();
+      }
+    };
+
+    // Request initial config on load
+    window.addEventListener('DOMContentLoaded', () => {
+      postToHost({ type: 'tts_hub_ready' });
+    });
+  </script>
+</body>
+</html>

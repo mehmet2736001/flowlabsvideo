@@ -1,0 +1,15 @@
+# WebView2 local browser profile & cache
+UserData/
+
+# Large generated/imported video & audio media files
+Projects/*/videos/*.mp4
+Projects/*/videos/*.webm
+Projects/*/videos/*.mov
+Projects/*/audio/*.wav
+Projects/*/audio/*.mp3
+Projects/*/renders/*.mp4
+Projects/*/temp_subs.srt
+
+# Temp archives
+lib/
+*.tmp

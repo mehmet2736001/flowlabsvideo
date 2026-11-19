@@ -1,0 +1,12 @@
+{
+  "flowUrl": "https://flow.google.com/project/d98f8df7-c977-46ba-8dd8-f39f24714571/tool/1af05941-50b5-4c91-b5d1-d4df10f10273",
+  "ttsUrl": "https://app.studio/tts_hub.html",
+  "customTtsUrl": "",
+  "ttsInputSelector": "textarea, #script-input, [contenteditable='true'], input[type='text']",
+  "ttsButtonSelector": "#generate-btn, button[type='submit'], .generate-btn, .tts-btn",
+  "autoPipeline": true,
+  "expectedVideoCount": 3,
+  "resolution": "1920x1080",
+  "fps": 30,
+  "activeProject": "DefaultProject"
+}
