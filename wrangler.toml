@@ -1,3 +1,5 @@
-name = "flow-video-studio"
-compatibility_date = "2026-01-01"
-pages_build_output_dir = "."
+name = "flowlabsvideo"
+compatibility_date = "2025-01-01"
+
+[assets]
+directory = "./cloudflare-pages-app"
