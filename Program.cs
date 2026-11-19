@@ -1663,6 +1663,30 @@ namespace FlowVideoStudio
             return fallbackSec;
         }
 
+        private bool ProbeHasAudio(string filePath)
+        {
+            try
+            {
+                if (!File.Exists(filePath)) return false;
+                ProcessStartInfo psi = new ProcessStartInfo
+                {
+                    FileName = "ffmpeg",
+                    Arguments = string.Format("-i \"{0}\"", filePath),
+                    UseShellExecute = false,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                };
+                using (Process p = Process.Start(psi))
+                {
+                    string err = p.StandardError.ReadToEnd();
+                    p.WaitForExit(3000);
+                    return Regex.IsMatch(err, @"Stream #\d+:\d+.*Audio:", RegexOptions.IgnoreCase);
+                }
+            }
+            catch { }
+            return false;
+        }
+
         // =========================================================================
         // FFMPEG MULTI-TRACK CAPCUT TIMELINE RENDER ENGINE
         // =========================================================================
@@ -1706,6 +1730,7 @@ namespace FlowVideoStudio
 
                     int inputIdx = 0;
                     StringBuilder concatVideoLabels = new StringBuilder();
+                    List<string> mixAudioLabels = new List<string>();
 
                     for (int i = 0; i < videoClips.Count; i++)
                     {
@@ -1718,6 +1743,8 @@ namespace FlowVideoStudio
                         double dur = Math.Max(0.2, GetDouble(vc, "duration", 10.0));
                         double speed = Math.Max(0.25, Math.Min(3.0, GetDouble(vc, "speed", 1.0)));
                         double srcDurNeeded = dur * speed;
+                        double startSec = Math.Max(0, GetDouble(vc, "start", 0));
+                        double vol = Math.Max(0, GetDouble(vc, "volume", 100)) / 100.0;
 
                         inputs.AppendFormat(CultureInfo.InvariantCulture, "-ss {0:0.###} -t {1:0.###} -i \"{2}\" ", trimIn, srcDurNeeded, localPath);
 
@@ -1728,6 +1755,19 @@ namespace FlowVideoStudio
                             inputIdx, ptsFactor, targetW, targetH, fps, vLabel);
 
                         concatVideoLabels.Append(vLabel);
+
+                        // Mix audio from this video clip if present
+                        if (File.Exists(localPath) && ProbeHasAudio(localPath))
+                        {
+                            string vaLabel = string.Format("[va{0}]", i);
+                            double audioSpeed = Math.Max(0.5, Math.Min(2.0, speed));
+                            int delayMs = (int)Math.Round(startSec * 1000);
+                            filter.AppendFormat(CultureInfo.InvariantCulture,
+                                "[{0}:a]atempo={1:0.###},volume={2:0.##},adelay={3}|{3},aresample=44100{4};",
+                                inputIdx, audioSpeed, vol, delayMs, vaLabel);
+                            mixAudioLabels.Add(vaLabel);
+                        }
+
                         inputIdx++;
                     }
 
@@ -1746,7 +1786,6 @@ namespace FlowVideoStudio
                     allAudioClips.AddRange(audioClips);
                     allAudioClips.AddRange(bgmClips);
 
-                    List<string> mixAudioLabels = new List<string>();
                     for (int i = 0; i < allAudioClips.Count; i++)
                     {
                         var ac = allAudioClips[i];
@@ -1776,7 +1815,7 @@ namespace FlowVideoStudio
                     string mapAudioArgs;
                     if (mixAudioLabels.Count > 0)
                     {
-                        filter.AppendFormat("{0}amix=inputs={1}:duration=longest:dropout_transition=0[aout]",
+                        filter.AppendFormat("{0}amix=inputs={1}:duration=longest:dropout_transition=0:normalize=0[aout]",
                             string.Join("", mixAudioLabels), mixAudioLabels.Count);
                         mapAudioArgs = "-map \"[aout]\" -c:a aac -b:a 192k";
                     }

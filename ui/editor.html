@@ -600,7 +600,7 @@
         <option value="60">60 FPS</option>
       </select>
       <label style="font-size:12px; display:flex; align-items:center; gap:4px; cursor:pointer;">
-        <input type="checkbox" id="burn-subtitles" checked /> Altyazı Göm
+        <input type="checkbox" id="burn-subtitles" onchange="updatePreviewAtPlayhead(false)" /> Altyazı Göm
       </label>
       <button class="render-btn" onclick="startFfmpegRender()">🚀 FFmpeg Render Al (.MP4)</button>
     </div>
@@ -1654,6 +1654,7 @@
         isPlaying = true;
         lastFrameTime = performance.now();
         document.getElementById('play-pause-btn').textContent = '⏸ Duraklat';
+        videoEl.muted = false;
         updatePreviewAtPlayhead(true);
         requestAnimationFrame(playbackLoop);
       }
@@ -1711,7 +1712,8 @@
     }
 
     function updatePreviewAtPlayhead(forceSeek) {
-      const activeSub = timeline.subClips.find(s => playheadSec >= s.start && playheadSec < s.start + s.duration);
+      const showSubs = document.getElementById('burn-subtitles').checked;
+      const activeSub = showSubs ? timeline.subClips.find(s => playheadSec >= s.start && playheadSec < s.start + s.duration) : null;
       const subOverlay = document.getElementById('subtitle-overlay');
       if (activeSub && activeSub.text) {
         subOverlay.style.display = 'block';
@@ -1730,10 +1732,11 @@
           videoEl.setAttribute('data-url', activeVid.url);
           videoEl.src = activeVid.url;
           videoEl.currentTime = targetMediaTime;
-        } else if (forceSeek || Math.abs(videoEl.currentTime - targetMediaTime) > 0.35) {
+        } else if (forceSeek || Math.abs(videoEl.currentTime - targetMediaTime) > 0.45) {
           try { videoEl.currentTime = targetMediaTime; } catch (e) {}
         }
         videoEl.playbackRate = activeVid.speed || 1.0;
+        videoEl.muted = false;
         videoEl.volume = Math.min(1, Math.max(0, (activeVid.volume !== undefined ? activeVid.volume : 100) / 100));
         if (isPlaying && videoEl.paused) {
           videoEl.play().catch(() => {});

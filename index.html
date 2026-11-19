@@ -825,8 +825,8 @@
               <option value="1920x1080">16:9 Yatay (1920x1080 Full HD)</option>
               <option value="1080x1080">1:1 Kare (1080x1080)</option>
             </select>
-            <label style="font-size:11px; display:flex; align-items:center; gap:4px;">
-              <input type="checkbox" id="chk-burn-subs" checked /> Altyazı
+            <label style="font-size:11px; display:flex; align-items:center; gap:4px; cursor:pointer;">
+              <input type="checkbox" id="chk-burn-subs" onchange="drawCompositeFrame()" /> Altyazı
             </label>
             <button class="render-btn" onclick="startBrowserRender()">🚀 Render Al (.MP4)</button>
           </div>
@@ -865,6 +865,13 @@
               <label style="font-size:11px; color:var(--muted);">Hız (0.5x - 2x)</label>
               <input type="number" step="0.1" min="0.4" max="2.5" id="i-speed" style="width:100%;" onchange="applyInspector()" />
             </div>
+          </div>
+          <div id="i-vol-wrap" style="margin-top:2px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <label style="font-size:11px; color:var(--muted);">Ses Seviyesi</label>
+              <span id="i-vol-lbl" style="font-size:11px; color:var(--accent);">100%</span>
+            </div>
+            <input type="range" min="0" max="200" value="100" id="i-vol" style="width:100%;" oninput="applyInspector()" />
           </div>
           <div id="i-sub-wrap" style="display:none;">
             <label style="font-size:11px; color:var(--muted);">Altyazı Metni</label>
@@ -1279,7 +1286,8 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       return new Promise((resolve) => {
         const v = document.createElement('video');
         v.src = url;
-        v.muted = true;
+        v.muted = false;
+        v.volume = 1.0;
         v.playsInline = true;
         v.preload = 'auto';
         v.onloadedmetadata = () => resolve(v);
@@ -1604,6 +1612,13 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       document.getElementById('i-dur').value = c.duration;
       document.getElementById('i-trim').value = c.trimIn || 0;
       document.getElementById('i-speed').value = c.speed || 1;
+      const volWrap = document.getElementById('i-vol-wrap');
+      if (volWrap) {
+        volWrap.style.display = c.track === 'sub' ? 'none' : 'block';
+        const vol = c.volume !== undefined ? c.volume : 100;
+        document.getElementById('i-vol').value = vol;
+        document.getElementById('i-vol-lbl').textContent = vol + '%';
+      }
       document.getElementById('i-sub-wrap').style.display = c.track === 'sub' ? 'block' : 'none';
       if (c.track === 'sub') document.getElementById('i-sub-text').value = c.text || '';
     }
@@ -1615,6 +1630,13 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       c.duration = round1(Math.max(0.3, parseFloat(document.getElementById('i-dur').value) || 1));
       c.trimIn = round1(Math.max(0, parseFloat(document.getElementById('i-trim').value) || 0));
       c.speed = round2(Math.max(0.4, parseFloat(document.getElementById('i-speed').value) || 1));
+      if (c.track !== 'sub') {
+        const vEl = document.getElementById('i-vol');
+        if (vEl) {
+          c.volume = parseInt(vEl.value, 10) || 0;
+          document.getElementById('i-vol-lbl').textContent = c.volume + '%';
+        }
+      }
       if (c.track === 'sub') c.text = document.getElementById('i-sub-text').value;
       renderTimeline();
       drawCompositeFrame();
@@ -1674,6 +1696,7 @@ Use the attached final-frame screenshot from the previous clip as the starting i
         isPlaying = true;
         lastTick = performance.now();
         document.getElementById('btn-play').textContent = '⏸ Duraklat';
+        mediaPool.videos.forEach(m => { if (m.videoElem) m.videoElem.muted = false; });
         syncMediaElementsToPlayhead(true);
         requestAnimationFrame(playLoop);
       }
@@ -1728,10 +1751,12 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       mediaPool.videos.forEach(m => {
         if (activeVC && activeVC.mediaId === m.id && m.videoElem) {
           const targetT = ((activeVC.trimIn || 0) + (playheadSec - activeVC.start) * (activeVC.speed || 1)) % Math.max(0.5, m.videoElem.duration || 10);
-          if (forceSeek || Math.abs(m.videoElem.currentTime - targetT) > 0.35) {
+          if (forceSeek || Math.abs(m.videoElem.currentTime - targetT) > 0.45) {
             try { m.videoElem.currentTime = targetT; } catch (e) {}
           }
           m.videoElem.playbackRate = activeVC.speed || 1;
+          m.videoElem.muted = false;
+          m.videoElem.volume = Math.min(1, Math.max(0, (activeVC.volume !== undefined ? activeVC.volume : 100) / 100));
           if (isPlaying && m.videoElem.paused) m.videoElem.play().catch(() => {});
         } else if (m.videoElem && !m.videoElem.paused) {
           m.videoElem.pause();
@@ -1743,9 +1768,10 @@ Use the attached final-frame screenshot from the previous clip as the starting i
         mediaPool.audios.forEach(m => {
           if (activeAC && activeAC.mediaId === m.id && m.audioElem) {
             const targetT = (activeAC.trimIn || 0) + (playheadSec - activeAC.start) * (activeAC.speed || 1);
-            if (forceSeek || Math.abs(m.audioElem.currentTime - targetT) > 0.35) {
+            if (forceSeek || Math.abs(m.audioElem.currentTime - targetT) > 0.45) {
               try { m.audioElem.currentTime = targetT; } catch (e) {}
             }
+            m.audioElem.volume = Math.min(1, Math.max(0, (activeAC.volume !== undefined ? activeAC.volume : 100) / 100));
             if (isPlaying && m.audioElem.paused) m.audioElem.play().catch(() => {});
           } else if (m.audioElem && !m.audioElem.paused) {
             m.audioElem.pause();
@@ -1837,6 +1863,28 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       const audioCtx = new AudioCtx();
       const destNode = audioCtx.createMediaStreamDestination();
 
+      // 1. Videoların orijinal seslerini decode et ve miksere bağla (Flow Labs videoları AAC ses içerir)
+      for (const vc of timeline.videoClips) {
+        const media = mediaPool.videos.find(m => m.id === vc.mediaId);
+        if (!media || !media.blob) continue;
+        try {
+          const arrBuf = await media.blob.arrayBuffer();
+          const vAudioBuf = await audioCtx.decodeAudioData(arrBuf.slice(0));
+          const vSrc = audioCtx.createBufferSource();
+          vSrc.buffer = vAudioBuf;
+          vSrc.playbackRate.value = vc.speed || 1;
+          const vGain = audioCtx.createGain();
+          vGain.gain.value = Math.max(0, (vc.volume !== undefined ? vc.volume : 100) / 100);
+          vSrc.connect(vGain);
+          vGain.connect(destNode);
+          vGain.connect(audioCtx.destination);
+          vSrc.start(audioCtx.currentTime + vc.start, vc.trimIn || 0, vc.duration);
+        } catch (e) {
+          // Video ses kanalı içermiyorsa sessizce devam et
+        }
+      }
+
+      // 2. Seslendirme (TTS) ve Arka Plan Müzik (BGM) seslerini miksere bağla
       const allAudio = [...timeline.audioClips, ...timeline.bgmClips];
       for (const ac of allAudio) {
         const media = mediaPool.audios.find(m => m.id === ac.mediaId);
@@ -1847,7 +1895,10 @@ Use the attached final-frame screenshot from the previous clip as the starting i
           const srcNode = audioCtx.createBufferSource();
           srcNode.buffer = audioBuf;
           srcNode.playbackRate.value = ac.speed || 1;
-          srcNode.connect(destNode);
+          const aGain = audioCtx.createGain();
+          aGain.gain.value = Math.max(0, (ac.volume !== undefined ? ac.volume : 100) / 100);
+          srcNode.connect(aGain);
+          aGain.connect(destNode);
           srcNode.connect(audioCtx.destination);
           srcNode.start(audioCtx.currentTime + ac.start, ac.trimIn || 0, ac.duration);
         } catch (e) {}
