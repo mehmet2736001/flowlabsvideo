@@ -22,9 +22,26 @@ namespace FlowVideoStudio
         [STAThread]
         static void Main()
         {
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainStudioForm());
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+                try { File.WriteAllText("crash.log", e.ExceptionObject.ToString()); } catch { }
+            };
+            Application.ThreadException += (s, e) =>
+            {
+                try { File.WriteAllText("crash.log", e.Exception.ToString()); } catch { }
+            };
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+
+            try
+            {
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                Application.Run(new MainStudioForm());
+            }
+            catch (Exception ex)
+            {
+                try { File.WriteAllText("crash.log", ex.ToString()); } catch { }
+            }
         }
     }
 
