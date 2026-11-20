@@ -452,6 +452,7 @@
       z-index: 4;
     }
     .clip-video { background: linear-gradient(135deg, #0077b6, #023e8a); }
+    .clip-pip { background: linear-gradient(135deg, #7c3aed, #4c1d95); border-left: 3px solid #10b981; }
     .clip-audio { background: linear-gradient(135deg, #009688, #004d40); }
     .clip-bgm { background: linear-gradient(135deg, #d35400, #78281f); }
     .clip-sub { background: linear-gradient(135deg, #8e44ad, #4a235a); }
@@ -877,6 +878,40 @@
             <label style="font-size:11px; color:var(--muted);">Altyazı Metni</label>
             <textarea id="i-sub-text" style="width:100%; height:60px;" oninput="applyInspector()"></textarea>
           </div>
+          <div id="i-pip-wrap" style="display:none; flex-direction:column; gap:8px;">
+            <div style="background:rgba(124,58,237,0.15); border:1px solid rgba(124,58,237,0.4); border-radius:6px; padding:8px;">
+              <div style="font-weight:700; color:#a78bfa; margin-bottom:6px; font-size:11px;">🖼️ PIP / Yeşil Ekran Logo Ayarları</div>
+              <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; margin-bottom:6px;">
+                <input type="checkbox" id="i-pip-chroma" onchange="applyInspector()" checked />
+                <span>🟢 Yeşil Ekranı Temizle (Chroma Key)</span>
+              </label>
+              <div style="margin-bottom:6px;">
+                <label style="font-size:11px; color:var(--muted); display:block; margin-bottom:2px;">Konum (Varsayılan: Alt Orta Logo)</label>
+                <select id="i-pip-pos" onchange="applyInspector()" style="width:100%; font-size:11.5px;">
+                  <option value="bottom-center">⬇️ Alt Orta (Logo / Watermark)</option>
+                  <option value="bottom-right">↘️ Alt Sağ</option>
+                  <option value="bottom-left">↙️ Alt Sol</option>
+                  <option value="top-right">↗️ Üst Sağ</option>
+                  <option value="top-left">↖️ Üst Sol</option>
+                  <option value="center">⏺️ Merkez</option>
+                </select>
+              </div>
+              <div style="margin-bottom:6px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <label style="font-size:11px; color:var(--muted);">Logo Boyutu (%):</label>
+                  <span id="i-pip-scale-lbl" style="font-size:11px; color:var(--accent);">38%</span>
+                </div>
+                <input type="range" min="15" max="90" value="38" id="i-pip-scale" oninput="applyInspector()" style="width:100%;" />
+              </div>
+              <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; margin-bottom:6px;">
+                <input type="checkbox" id="i-pip-loop" onchange="applyInspector()" checked />
+                <span>🔄 Videonun Sonuna Kadar Döngü (Loop)</span>
+              </label>
+              <button onclick="pinPipToEntireVideo()" style="width:100%; font-size:11.5px; margin-top:4px;" class="primary">
+                🌟 Tüm Videoya Sabitle (Sabit Logo)
+              </button>
+            </div>
+          </div>
           <div style="display:flex; gap:6px; margin-top:4px;">
             <button onclick="splitAtPlayhead()" style="flex:1;">✂️ Böl</button>
             <button onclick="deleteSelected()" style="flex:1; color:#ff3b5c; border-color:#ff3b5c;">🗑️ Sil</button>
@@ -904,6 +939,7 @@
         <div class="track-headers">
           <div class="ruler-corner">Timeline</div>
           <div class="track-header" style="color:#d2a8ff;">📝 Altyazı</div>
+          <div class="track-header" style="color:#a78bfa;">🖼️ PIP / Logo</div>
           <div class="track-header" style="color:#38bdf8;">🎬 Video</div>
           <div class="track-header" style="color:#34d399;">🎙️ Ses</div>
           <div class="track-header" style="color:#fb923c;">🎵 Müzik</div>
@@ -913,6 +949,7 @@
           <div class="timeline-canvas" id="timeline-canvas">
             <div class="time-ruler" id="time-ruler"></div>
             <div class="track-lane" id="lane-sub"></div>
+            <div class="track-lane" id="lane-pip"></div>
             <div class="track-lane" id="lane-video"></div>
             <div class="track-lane" id="lane-audio"></div>
             <div class="track-lane" id="lane-bgm"></div>
@@ -1000,6 +1037,7 @@ Use the attached final-frame screenshot from the previous clip as the starting i
     let currentVoxJsonString = '';
     let timeline = {
       videoClips: [],
+      pipClips: [],
       audioClips: [],
       bgmClips: [],
       subClips: []
@@ -1273,7 +1311,7 @@ Use the attached final-frame screenshot from the previous clip as the starting i
     function clearAllProjectMedia() {
       mediaPool.videos = [];
       mediaPool.audios = [];
-      timeline = { videoClips: [], audioClips: [], bgmClips: [], subClips: [] };
+      timeline = { videoClips: [], pipClips: [], audioClips: [], bgmClips: [], subClips: [] };
       if (db) {
         try { db.transaction('media', 'readwrite').objectStore('media').clear(); } catch (e) {}
       }
@@ -1356,7 +1394,10 @@ Use the attached final-frame screenshot from the previous clip as the starting i
           <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
             <strong style="color:var(--accent);">Sahne ${idx + 1}:</strong> 🎬 ${esc(v.name)} (${v.duration} sn)
           </span>
-          <button onclick="addPoolItemToTimeline('video', ${idx})">+ Timeline</button>
+          <div style="display:flex; gap:4px;">
+            <button onclick="addPoolItemToTimeline('video', ${idx})">+ Sahne</button>
+            <button onclick="addPoolItemToTimeline('pip', ${idx})" style="background:#7c3aed; border-color:#8b5cf6;">🖼️ PIP/Logo</button>
+          </div>
         </div>
       `).join('') || '<div style="font-size:12px; color:var(--muted);">Henüz video yüklenmedi.</div>';
 
@@ -1392,21 +1433,35 @@ Use the attached final-frame screenshot from the previous clip as the starting i
         if (!m) return;
         timeline.videoClips.push({
           id: uid('vc'), track: 'video', mediaId: m.id, name: m.name,
-          start: round1(getTrackEnd(timeline.videoClips)), duration: m.duration, trimIn: 0, speed: 1
+          start: round1(getTrackEnd(timeline.videoClips)), duration: m.duration, trimIn: 0, speed: 1, volume: 100
+        });
+      } else if (track === 'pip') {
+        const m = mediaPool.videos[idx];
+        if (!m) return;
+        const tot = getTotalDuration();
+        timeline.pipClips.push({
+          id: uid('pc'), track: 'pip', mediaId: m.id, name: m.name,
+          start: 0,
+          duration: round1(tot > 0 ? tot : m.duration),
+          trimIn: 0, speed: 1, volume: 0,
+          chromaKey: true,
+          position: 'bottom-center',
+          scalePercent: 38,
+          loop: true
         });
       } else if (track === 'audio') {
         const m = mediaPool.audios[idx];
         if (!m) return;
         timeline.audioClips.push({
           id: uid('ac'), track: 'audio', mediaId: m.id, name: m.name,
-          start: round1(getTrackEnd(timeline.audioClips)), duration: m.duration, trimIn: 0, speed: 1
+          start: round1(getTrackEnd(timeline.audioClips)), duration: m.duration, trimIn: 0, speed: 1, volume: 100
         });
       } else if (track === 'bgm') {
         const m = mediaPool.audios[idx];
         if (!m) return;
         timeline.bgmClips.push({
           id: uid('bc'), track: 'bgm', mediaId: m.id, name: m.name,
-          start: round1(getTrackEnd(timeline.bgmClips)), duration: m.duration, trimIn: 0, speed: 1
+          start: round1(getTrackEnd(timeline.bgmClips)), duration: m.duration, trimIn: 0, speed: 1, volume: 100
         });
       }
       renderTimeline();
@@ -1416,16 +1471,21 @@ Use the attached final-frame screenshot from the previous clip as the starting i
     function autoAssembleAllToTimeline() {
       if (parsedScenes.length === 0) onScriptChanged();
       timeline.videoClips = [];
+      timeline.pipClips = [];
       timeline.audioClips = [];
       timeline.subClips = [];
 
+      const logoPips = mediaPool.videos.filter(v => /logo|pip|badge|filigran|watermark/i.test(v.name));
+      const sceneVideos = mediaPool.videos.filter(v => !/logo|pip|badge|filigran|watermark/i.test(v.name));
+      const videosToUse = sceneVideos.length > 0 ? sceneVideos : mediaPool.videos;
+
       let vt = 0;
-      mediaPool.videos.forEach((v, idx) => {
+      videosToUse.forEach((v, idx) => {
         const sc = parsedScenes[idx];
         timeline.videoClips.push({
           id: uid('vc'), track: 'video', mediaId: v.id,
           name: sc ? `${v.name} (${sc.title})` : v.name,
-          start: round1(vt), duration: v.duration, trimIn: 0, speed: 1
+          start: round1(vt), duration: v.duration, trimIn: 0, speed: 1, volume: 100
         });
         vt += v.duration;
       });
@@ -1434,7 +1494,7 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       mediaPool.audios.forEach(a => {
         timeline.audioClips.push({
           id: uid('ac'), track: 'audio', mediaId: a.id, name: a.name,
-          start: round1(at), duration: a.duration, trimIn: 0, speed: 1
+          start: round1(at), duration: a.duration, trimIn: 0, speed: 1, volume: 100
         });
         at += a.duration;
       });
@@ -1451,6 +1511,17 @@ Use the attached final-frame screenshot from the previous clip as the starting i
         });
         st = start + dur;
       });
+
+      const totalDur = getTotalDuration();
+      if (logoPips.length > 0 && totalDur > 0) {
+        logoPips.forEach(lp => {
+          timeline.pipClips.push({
+            id: uid('pc'), track: 'pip', mediaId: lp.id, name: lp.name,
+            start: 0, duration: round1(totalDur), trimIn: 0, speed: 1, volume: 0,
+            chromaKey: true, position: 'bottom-center', scalePercent: 38, loop: true
+          });
+        });
+      }
 
       playheadSec = 0;
       renderTimeline();
@@ -1497,7 +1568,7 @@ Use the attached final-frame screenshot from the previous clip as the starting i
     }
 
     function getTotalDuration() {
-      const all = [...timeline.videoClips, ...timeline.audioClips, ...timeline.bgmClips, ...timeline.subClips];
+      const all = [...timeline.videoClips, ...(timeline.pipClips || []), ...timeline.audioClips, ...timeline.bgmClips, ...timeline.subClips];
       if (all.length === 0) return 0;
       return Math.max(...all.map(c => c.start + c.duration));
     }
@@ -1516,6 +1587,7 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       ruler.innerHTML = rHtml;
 
       renderTrackLane('lane-sub', timeline.subClips, 'clip-sub');
+      renderTrackLane('lane-pip', timeline.pipClips || [], 'clip-pip');
       renderTrackLane('lane-video', timeline.videoClips, 'clip-video');
       renderTrackLane('lane-audio', timeline.audioClips, 'clip-audio');
       renderTrackLane('lane-bgm', timeline.bgmClips, 'clip-bgm');
@@ -1599,7 +1671,7 @@ Use the attached final-frame screenshot from the previous clip as the starting i
     });
 
     function findClip(id) {
-      return [...timeline.videoClips, ...timeline.audioClips, ...timeline.bgmClips, ...timeline.subClips].find(c => c.id === id);
+      return [...timeline.videoClips, ...(timeline.pipClips || []), ...timeline.audioClips, ...timeline.bgmClips, ...timeline.subClips].find(c => c.id === id);
     }
 
     function populateInspector() {
@@ -1614,13 +1686,26 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       document.getElementById('i-speed').value = c.speed || 1;
       const volWrap = document.getElementById('i-vol-wrap');
       if (volWrap) {
-        volWrap.style.display = c.track === 'sub' ? 'none' : 'block';
+        volWrap.style.display = (c.track === 'sub' || c.track === 'pip') ? 'none' : 'block';
         const vol = c.volume !== undefined ? c.volume : 100;
         document.getElementById('i-vol').value = vol;
         document.getElementById('i-vol-lbl').textContent = vol + '%';
       }
       document.getElementById('i-sub-wrap').style.display = c.track === 'sub' ? 'block' : 'none';
       if (c.track === 'sub') document.getElementById('i-sub-text').value = c.text || '';
+
+      const pipWrap = document.getElementById('i-pip-wrap');
+      if (pipWrap) {
+        pipWrap.style.display = c.track === 'pip' ? 'flex' : 'none';
+        if (c.track === 'pip') {
+          document.getElementById('i-pip-chroma').checked = c.chromaKey !== false;
+          document.getElementById('i-pip-pos').value = c.position || 'bottom-center';
+          const sc = c.scalePercent || 38;
+          document.getElementById('i-pip-scale').value = sc;
+          document.getElementById('i-pip-scale-lbl').textContent = sc + '%';
+          document.getElementById('i-pip-loop').checked = c.loop !== false;
+        }
+      }
     }
 
     function applyInspector() {
@@ -1630,7 +1715,7 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       c.duration = round1(Math.max(0.3, parseFloat(document.getElementById('i-dur').value) || 1));
       c.trimIn = round1(Math.max(0, parseFloat(document.getElementById('i-trim').value) || 0));
       c.speed = round2(Math.max(0.4, parseFloat(document.getElementById('i-speed').value) || 1));
-      if (c.track !== 'sub') {
+      if (c.track !== 'sub' && c.track !== 'pip') {
         const vEl = document.getElementById('i-vol');
         if (vEl) {
           c.volume = parseInt(vEl.value, 10) || 0;
@@ -1638,6 +1723,26 @@ Use the attached final-frame screenshot from the previous clip as the starting i
         }
       }
       if (c.track === 'sub') c.text = document.getElementById('i-sub-text').value;
+      if (c.track === 'pip') {
+        c.chromaKey = document.getElementById('i-pip-chroma').checked;
+        c.position = document.getElementById('i-pip-pos').value;
+        c.scalePercent = parseInt(document.getElementById('i-pip-scale').value, 10) || 38;
+        document.getElementById('i-pip-scale-lbl').textContent = c.scalePercent + '%';
+        c.loop = document.getElementById('i-pip-loop').checked;
+      }
+      renderTimeline();
+      drawCompositeFrame();
+    }
+
+    function pinPipToEntireVideo() {
+      const c = findClip(selectedClipId);
+      if (!c || c.track !== 'pip') return;
+      c.start = 0;
+      c.duration = round1(getTotalDuration() || 10.0);
+      c.loop = true;
+      c.position = 'bottom-center';
+      c.chromaKey = true;
+      populateInspector();
       renderTimeline();
       drawCompositeFrame();
     }
@@ -1652,15 +1757,17 @@ Use the attached final-frame screenshot from the previous clip as the starting i
       clone.id = uid(c.track);
       clone.start = round1(playheadSec);
       clone.duration = d2;
-      const map = { video: timeline.videoClips, audio: timeline.audioClips, bgm: timeline.bgmClips, sub: timeline.subClips };
-      map[c.track].push(clone);
+      const map = { video: timeline.videoClips, pip: timeline.pipClips, audio: timeline.audioClips, bgm: timeline.bgmClips, sub: timeline.subClips };
+      if (map[c.track]) map[c.track].push(clone);
       renderTimeline();
     }
 
     function deleteSelected() {
       if (!selectedClipId) return;
-      ['videoClips', 'audioClips', 'bgmClips', 'subClips'].forEach(k => {
-        timeline[k] = timeline[k].filter(c => c.id !== selectedClipId);
+      ['videoClips', 'pipClips', 'audioClips', 'bgmClips', 'subClips'].forEach(k => {
+        if (timeline[k]) {
+          timeline[k] = timeline[k].filter(c => c.id !== selectedClipId);
+        }
       });
       selectedClipId = null;
       populateInspector();
@@ -1748,6 +1855,8 @@ Use the attached final-frame screenshot from the previous clip as the starting i
 
     function syncMediaElementsToPlayhead(forceSeek) {
       const activeVC = timeline.videoClips.find(c => playheadSec >= c.start && playheadSec < c.start + c.duration);
+      const activePC = (timeline.pipClips || []).find(c => playheadSec >= c.start && playheadSec < c.start + c.duration);
+
       mediaPool.videos.forEach(m => {
         if (activeVC && activeVC.mediaId === m.id && m.videoElem) {
           const targetT = ((activeVC.trimIn || 0) + (playheadSec - activeVC.start) * (activeVC.speed || 1)) % Math.max(0.5, m.videoElem.duration || 10);
@@ -1757,6 +1866,16 @@ Use the attached final-frame screenshot from the previous clip as the starting i
           m.videoElem.playbackRate = activeVC.speed || 1;
           m.videoElem.muted = false;
           m.videoElem.volume = Math.min(1, Math.max(0, (activeVC.volume !== undefined ? activeVC.volume : 100) / 100));
+          if (isPlaying && m.videoElem.paused) m.videoElem.play().catch(() => {});
+        } else if (activePC && activePC.mediaId === m.id && m.videoElem) {
+          const pipDur = Math.max(0.5, m.videoElem.duration || 3.92);
+          let targetT = (activePC.trimIn || 0) + (playheadSec - activePC.start) * (activePC.speed || 1);
+          if (activePC.loop !== false) targetT = targetT % pipDur;
+          if (forceSeek || Math.abs(m.videoElem.currentTime - targetT) > 0.45) {
+            try { m.videoElem.currentTime = targetT; } catch (e) {}
+          }
+          m.videoElem.playbackRate = activePC.speed || 1;
+          m.videoElem.muted = true;
           if (isPlaying && m.videoElem.paused) m.videoElem.play().catch(() => {});
         } else if (m.videoElem && !m.videoElem.paused) {
           m.videoElem.pause();
@@ -1778,6 +1897,63 @@ Use the attached final-frame screenshot from the previous clip as the starting i
           }
         });
       }
+    }
+
+    function renderChromaKeyFrame(videoElem, targetCtx, canvasW, canvasH, config) {
+      if (!videoElem || videoElem.readyState < 2) return;
+
+      if (!window._chromaOffCanvas) {
+        window._chromaOffCanvas = document.createElement('canvas');
+        window._chromaOffCtx = window._chromaOffCanvas.getContext('2d', { willReadFrequently: true });
+      }
+      const offCanvas = window._chromaOffCanvas;
+      const offCtx = window._chromaOffCtx;
+
+      const vw = videoElem.videoWidth || 1920;
+      const vh = videoElem.videoHeight || 1080;
+      const procW = 480;
+      const procH = Math.round((procW / vw) * vh) || 270;
+
+      if (offCanvas.width !== procW || offCanvas.height !== procH) {
+        offCanvas.width = procW;
+        offCanvas.height = procH;
+      }
+      offCtx.drawImage(videoElem, 0, 0, procW, procH);
+
+      if (config.chromaKey !== false) {
+        const imgData = offCtx.getImageData(0, 0, procW, procH);
+        const d = imgData.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const r = d[i], g = d[i + 1], b = d[i + 2];
+          // Pure green colorkey (0x13C322) filter preserving blue badge & dark blue text
+          if (g > 65 && g > r * 1.25 && g > b * 1.25) {
+            d[i + 3] = 0;
+          } else if (g > 55 && g > r * 1.12 && g > b * 1.12) {
+            const diff = g - Math.max(r, b) * 1.12;
+            d[i + 3] = Math.max(0, Math.min(255, Math.round(255 - diff * 8)));
+          }
+        }
+        offCtx.putImageData(imgData, 0, 0);
+      }
+
+      const scalePct = (config.scalePercent || 38) / 100;
+      const drawW = canvasW * scalePct;
+      const drawH = (drawW / vw) * vh;
+
+      let drawX = (canvasW - drawW) / 2;
+      let drawY = canvasH - drawH - (canvasH * 0.08);
+
+      const pos = config.position || 'bottom-center';
+      if (pos === 'bottom-right') { drawX = canvasW - drawW - 20; drawY = canvasH - drawH - (canvasH * 0.08); }
+      else if (pos === 'bottom-left') { drawX = 20; drawY = canvasH - drawH - (canvasH * 0.08); }
+      else if (pos === 'top-right') { drawX = canvasW - drawW - 20; drawY = 25; }
+      else if (pos === 'top-left') { drawX = 20; drawY = 25; }
+      else if (pos === 'center') { drawX = (canvasW - drawW) / 2; drawY = (canvasH - drawH) / 2; }
+
+      const oldAlpha = targetCtx.globalAlpha;
+      targetCtx.globalAlpha = (config.opacity !== undefined ? config.opacity : 100) / 100;
+      targetCtx.drawImage(offCanvas, drawX, drawY, drawW, drawH);
+      targetCtx.globalAlpha = oldAlpha;
     }
 
     function drawCompositeFrame() {
@@ -1802,6 +1978,15 @@ Use the attached final-frame screenshot from the previous clip as the starting i
         ctx.font = 'bold 22px Segoe UI, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('CapCut Timeline Önizleme', canvas.width / 2, canvas.height / 2);
+      }
+
+      // Draw active PIP / Chroma Key Logo Overlay (bottom-center)
+      const activePC = (timeline.pipClips || []).find(c => playheadSec >= c.start && playheadSec < c.start + c.duration);
+      if (activePC) {
+        const media = mediaPool.videos.find(m => m.id === activePC.mediaId);
+        if (media && media.videoElem && media.videoElem.readyState >= 2) {
+          renderChromaKeyFrame(media.videoElem, ctx, canvas.width, canvas.height, activePC);
+        }
       }
 
       if (document.getElementById('chk-burn-subs').checked) {

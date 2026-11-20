@@ -1720,6 +1720,8 @@ namespace FlowVideoStudio
             var tl = payload["timeline"] as Dictionary<string, object>;
             var videoClips = ToDictList(tl != null && tl.ContainsKey("videoClips") ? tl["videoClips"] : null)
                 .OrderBy(c => GetDouble(c, "start", 0)).ToList();
+            var pipClips = ToDictList(tl != null && tl.ContainsKey("pipClips") ? tl["pipClips"] : null)
+                .OrderBy(c => GetDouble(c, "start", 0)).ToList();
             var audioClips = ToDictList(tl != null && tl.ContainsKey("audioClips") ? tl["audioClips"] : null)
                 .OrderBy(c => GetDouble(c, "start", 0)).ToList();
             var bgmClips = ToDictList(tl != null && tl.ContainsKey("bgmClips") ? tl["bgmClips"] : null)
@@ -1798,6 +1800,69 @@ namespace FlowVideoStudio
                         filter.AppendFormat("{0}subtitles=temp_subs.srt:force_style='FontSize=16,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BorderStyle=3,Outline=2,Shadow=0,MarginV=35'[vout];", videoStageLabel);
                         videoStageLabel = "[vout]";
                     }
+
+                    string currentVideoStage = videoStageLabel;
+                    for (int p = 0; p < pipClips.Count; p++)
+                    {
+                        var pc = pipClips[p];
+                        string localPath = Convert.ToString(pc["localPath"]);
+                        if (!File.Exists(localPath))
+                            localPath = Path.Combine(videosDir, Convert.ToString(pc["fileName"]));
+                        if (!File.Exists(localPath))
+                            localPath = Path.Combine(projectDir, Convert.ToString(pc["fileName"]));
+                        if (!File.Exists(localPath)) continue;
+
+                        double pipStart = Math.Max(0, GetDouble(pc, "start", 0));
+                        double pipDur = Math.Max(0.2, GetDouble(pc, "duration", 10.0));
+                        double speed = Math.Max(0.25, Math.Min(3.0, GetDouble(pc, "speed", 1.0)));
+                        bool loop = !pc.ContainsKey("loop") || Convert.ToBoolean(pc["loop"]);
+                        bool chroma = !pc.ContainsKey("chromaKey") || Convert.ToBoolean(pc["chromaKey"]);
+                        string pos = pc.ContainsKey("position") ? Convert.ToString(pc["position"]) : "bottom-center";
+                        double scalePct = Math.Max(15, Math.Min(90, GetDouble(pc, "scalePercent", 38)));
+                        int targetPipW = (int)Math.Round(targetW * (scalePct / 100.0));
+
+                        if (loop)
+                        {
+                            inputs.AppendFormat(CultureInfo.InvariantCulture, "-stream_loop -1 -i \"{0}\" ", localPath);
+                        }
+                        else
+                        {
+                            double trimIn = Math.Max(0, GetDouble(pc, "trimIn", 0));
+                            inputs.AppendFormat(CultureInfo.InvariantCulture, "-ss {0:0.###} -t {1:0.###} -i \"{2}\" ", trimIn, pipDur * speed, localPath);
+                        }
+
+                        string pipPrepLabel = string.Format("[pip_prep_{0}]", p);
+                        if (chroma)
+                        {
+                            filter.AppendFormat(CultureInfo.InvariantCulture,
+                                "[{0}:v]colorkey=0x13C322:0.25:0.05,scale={1}:-1,format=rgba{2};",
+                                inputIdx, targetPipW, pipPrepLabel);
+                        }
+                        else
+                        {
+                            filter.AppendFormat(CultureInfo.InvariantCulture,
+                                "[{0}:v]scale={1}:-1,format=rgba{2};",
+                                inputIdx, targetPipW, pipPrepLabel);
+                        }
+
+                        string overlayPos;
+                        int yOffset = (int)Math.Round(targetH * 0.08);
+                        if (pos == "bottom-right") overlayPos = string.Format(CultureInfo.InvariantCulture, "W-w-30:H-h-{0}", yOffset);
+                        else if (pos == "bottom-left") overlayPos = string.Format(CultureInfo.InvariantCulture, "30:H-h-{0}", yOffset);
+                        else if (pos == "top-right") overlayPos = "W-w-30:50";
+                        else if (pos == "top-left") overlayPos = "30:50";
+                        else if (pos == "center") overlayPos = "(W-w)/2:(H-h)/2";
+                        else overlayPos = string.Format(CultureInfo.InvariantCulture, "(W-w)/2:H-h-{0}", yOffset); // bottom-center logo
+
+                        string nextVideoStage = string.Format("[vpip_{0}]", p);
+                        filter.AppendFormat(CultureInfo.InvariantCulture,
+                            "{0}{1}overlay={2}:enable='between(t,{3:0.###},{4:0.###})'{5};",
+                            currentVideoStage, pipPrepLabel, overlayPos, pipStart, pipStart + pipDur, nextVideoStage);
+
+                        currentVideoStage = nextVideoStage;
+                        inputIdx++;
+                    }
+                    videoStageLabel = currentVideoStage;
 
                     var allAudioClips = new List<Dictionary<string, object>>();
                     allAudioClips.AddRange(audioClips);
